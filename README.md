@@ -14,8 +14,19 @@ Open the project in Unity 6000.6.0f1, open `Assets/_Project/Scenes/Arena.unity`,
 
 Every number lives in a ScriptableObject under `Assets/_Project/Configs/`:
 `DriveConfig`, `AimConfig`, `ArenaConfig`, `CameraConfig`, `CarDefinition`.
-Arena radius is `ArenaConfig.radiusInCarLengths * CarDefinition.length`, so changing the
-car length rescales the arena.
+Sizes are absolute metres: `ArenaConfig.radiusMetres` sets the arena, and
+`groundTileMetres` / `wallTileMetres` set how often each texture repeats. The arena does
+not move when `CarDefinition.length` changes — a texture's scale is a property of the
+material, not of whatever drives over it.
+
+The one deliberate exception is `ArenaConfig.gridCellInCarLengths`. That sizes the
+generated placeholder grid, which is a measuring tool: its cells are one car long so
+speed, braking distance and drift are countable while play-testing. It is ignored the
+moment a real ground material is assigned.
+
+Leave `groundMaterial` or `wallMaterial` empty and the arena generates its own placeholder
+texture. Assign a material and it tiles correctly with no further setup — tiling is baked
+into the mesh UVs, not set on the material.
 
 All decay values are **rates in 1/s**, applied as `exp(-rate * dt)` so handling never
 changes with the physics timestep.
