@@ -46,6 +46,19 @@ namespace MotorCombat.Tests
                             Vector3.Dot(twoSmallSteps, Vector3.right), 1e-5f);
         }
 
+        [Test]
+        public void Grip_PreservesVerticalVelocity()
+        {
+            // Gravity gives a grounded car a nonzero y velocity every frame; grip
+            // must bleed only the sideways component and leave falling untouched.
+            var velocity = new Vector3(3f, -4f, 10f);
+            var result = DrivePhysics.ApplyGrip(velocity, Forward, 6f, 0.02f);
+
+            Assert.AreEqual(-4f, result.y, 1e-4f, "vertical velocity must pass through untouched");
+            Assert.AreEqual(10f, Vector3.Dot(result, Forward), 1e-4f, "longitudinal must be untouched");
+            Assert.Less(Vector3.Dot(result, Vector3.right), 3f, "lateral must decay");
+        }
+
         // --- Drag -------------------------------------------------------------
 
         [Test]

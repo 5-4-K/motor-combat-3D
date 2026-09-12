@@ -58,6 +58,13 @@ namespace MotorCombat.Driving
         /// where the nose points and where the car is actually travelling is the
         /// drift. <paramref name="gripStrength"/> is in 1/s; higher is grippier.
         /// </summary>
+        /// <param name="forward">
+        /// MUST be a horizontal unit vector (y = 0). The decomposition treats
+        /// {forward, right, up} as an orthonormal basis, which only holds when
+        /// forward is horizontal; a pitched forward silently produces a wrong
+        /// reconstruction, and a near-vertical one degenerates to zero lateral.
+        /// Callers flatten before calling.
+        /// </param>
         public static Vector3 ApplyGrip(Vector3 velocity, Vector3 forward, float gripStrength, float dt)
         {
             Vector3 right = Vector3.Cross(Vector3.up, forward).normalized;
