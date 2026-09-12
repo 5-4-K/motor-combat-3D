@@ -1,0 +1,21 @@
+{
+    "name": "MotorCombat.EditorTools",
+    "rootNamespace": "MotorCombat.EditorTools",
+    "references": [
+        "MotorCombat.Core",
+        "MotorCombat.Driving",
+        "MotorCombat.Aiming",
+        "MotorCombat.Arena",
+        "MotorCombat.Cameras",
+        "MotorCombat.Cars"
+    ],
+    "includePlatforms": ["Editor"],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
