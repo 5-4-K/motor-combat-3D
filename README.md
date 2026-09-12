@@ -42,6 +42,9 @@ unity run . -- -executeMethod MotorCombat.EditorTools.ArenaSceneBuilder.BuildSce
 ## Status
 
 Skeleton only. No combat, damage, health, respawn, menus, lobby, netcode, audio or real art.
+The controls above describe intended behaviour implemented in code and covered by unit tests
+at the maths level; the manual play-test checklist in the plan has not been run yet, so
+nothing here has been verified in Play mode.
 `RammingModule` and `WeaponModule` are empty seams.
 
 - Design: [`docs/superpowers/specs/2026-09-12-motor-combat-3d-skeleton-design.md`](docs/superpowers/specs/2026-09-12-motor-combat-3d-skeleton-design.md)
