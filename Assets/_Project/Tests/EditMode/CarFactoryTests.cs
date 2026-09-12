@@ -38,9 +38,47 @@ namespace MotorCombat.Tests
         public void TearDown()
         {
             if (_car != null) Object.DestroyImmediate(_car.gameObject);
+            if (_modelCar != null) Object.DestroyImmediate(_modelCar.gameObject);
+            if (_model != null) Object.DestroyImmediate(_model);
             Object.DestroyImmediate(_definition.driveConfig);
             Object.DestroyImmediate(_definition.aimConfig);
             Object.DestroyImmediate(_definition);
+        }
+
+        // --- Model visual helpers ---------------------------------------------
+
+        GameObject _model;
+        CarController _modelCar;
+
+        /// <summary>
+        /// Stands in for an asset-store car prefab: a renderer, a collider it
+        /// ships with, and a nested Rigidbody. All three are things CarFactory
+        /// has to cope with.
+        /// </summary>
+        GameObject BuildFakeModel()
+        {
+            var model = new GameObject("FakeModel");
+
+            var mesh = GameObject.CreatePrimitive(PrimitiveType.Cube);   // brings its own BoxCollider
+            mesh.name = "FakeBody";
+            mesh.transform.SetParent(model.transform, false);
+
+            model.AddComponent<Rigidbody>();
+            return model;
+        }
+
+        CarController SpawnWithModel()
+        {
+            _model = BuildFakeModel();
+            _definition.visualPrefab = _model;
+            _modelCar = CarFactory.Spawn(
+                _definition, Vector3.zero, Quaternion.identity, null, Color.red);
+            return _modelCar;
+        }
+
+        static Transform Visual(CarController car)
+        {
+            return car.transform.Find(CarFactory.VisualName);
         }
 
         [Test]
@@ -92,6 +130,103 @@ namespace MotorCombat.Tests
         {
             Assert.AreSame(_definition.driveConfig, _car.GetComponent<DrivingModule>().config);
             Assert.AreSame(_definition.aimConfig, _car.GetComponent<AimModule>().config);
+        }
+
+        // --- Visual: placeholder box ------------------------------------------
+
+        [Test]
+        public void Spawn_UsesThePlaceholderBoxWhenNoModelIsAssigned()
+        {
+            Assert.IsNotNull(Visual(_car), "the box is still named " + CarFactory.VisualName);
+            Assert.IsNotNull(_car.transform.Find(CarFactory.NoseName),
+                "a featureless box needs the facing marker");
+        }
+
+        // --- Visual: real model -----------------------------------------------
+
+        [Test]
+        public void Spawn_InstantiatesTheModelAsTheVisualChild()
+        {
+            var car = SpawnWithModel();
+            var visual = Visual(car);
+
+            Assert.IsNotNull(visual, "the model becomes the visual child");
+            Assert.Greater(visual.GetComponentsInChildren<Renderer>(true).Length, 0);
+            Assert.AreNotSame(_model.transform, visual, "must be an instance, not the source object");
+        }
+
+        [Test]
+        public void Spawn_SuppressesTheNoseMarkerWhenAModelIsAssigned()
+        {
+            var car = SpawnWithModel();
+            Assert.IsNull(car.transform.Find(CarFactory.NoseName),
+                "a real model shows its own facing; the marker is placeholder-only");
+        }
+
+        /// <summary>
+        /// The one that matters. Asset-store car prefabs routinely ship mesh
+        /// colliders. Left in place they join the root Rigidbody as a compound
+        /// collider, and a concave mesh collider on a dynamic body is illegal in
+        /// PhysX — so the car's collision silently stops being the box the
+        /// driving model assumes.
+        /// </summary>
+        [Test]
+        public void Spawn_StripsCollidersThatShipWithTheModel()
+        {
+            var car = SpawnWithModel();
+
+            Assert.AreEqual(0, Visual(car).GetComponentsInChildren<Collider>(true).Length,
+                "the model must contribute no collision");
+            Assert.AreEqual(1, car.GetComponents<BoxCollider>().Length,
+                "collision still lives on the root, exactly once");
+        }
+
+        [Test]
+        public void Spawn_StripsNestedRigidbodiesFromTheModel()
+        {
+            var car = SpawnWithModel();
+
+            Assert.AreEqual(0, Visual(car).GetComponentsInChildren<Rigidbody>(true).Length,
+                "a nested Rigidbody would break the root's physics");
+        }
+
+        [Test]
+        public void Spawn_SizesTheColliderFromTheDefinitionNotTheModel()
+        {
+            var car = SpawnWithModel();
+
+            Assert.AreEqual(new Vector3(2f, 1.2f, 4.5f), car.GetComponents<BoxCollider>()[0].size,
+                "the model is decoration inside the box, never the source of its size");
+        }
+
+        [Test]
+        public void Spawn_AppliesTheConfiguredVisualOffsetAndYaw()
+        {
+            _definition.visualOffset = new Vector3(0f, -0.6f, 0f);
+            _definition.visualYawOffset = 180f;
+
+            var visual = Visual(SpawnWithModel());
+
+            Assert.AreEqual(new Vector3(0f, -0.6f, 0f), visual.localPosition);
+            Assert.AreEqual(180f, visual.localRotation.eulerAngles.y, 1e-3f);
+        }
+
+        /// <summary>
+        /// Team colour goes through a MaterialPropertyBlock. The model's materials
+        /// are shared assets — writing to them would recolour every car at once
+        /// and permanently alter the asset on disk.
+        /// </summary>
+        [Test]
+        public void Spawn_TintsWithoutTouchingTheSharedMaterial()
+        {
+            var car = SpawnWithModel();
+            var renderer = Visual(car).GetComponentInChildren<Renderer>();
+
+            Assert.IsTrue(renderer.HasPropertyBlock(), "tint must be per-instance");
+
+            var block = new MaterialPropertyBlock();
+            renderer.GetPropertyBlock(block, 0);
+            Assert.AreEqual(Color.red, block.GetColor("_BaseColor"));
         }
     }
 }

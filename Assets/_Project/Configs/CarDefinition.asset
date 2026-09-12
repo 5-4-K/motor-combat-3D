@@ -12,10 +12,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f6ac3d0b3e54f2e469e513ce07f6ea0a, type: 3}
   m_Name: CarDefinition
   m_EditorClassIdentifier: MotorCombat.Cars::MotorCombat.Cars.CarDefinition
-  length: 4.5
-  width: 2
-  height: 1.2
+  length: 4.6568
+  width: 2.2075
+  height: 1.3422
   mass: 1200
-  driverAnchorOffset: {x: 0, y: 1, z: 0.4}
+  driverAnchorOffset: {x: 0, y: 0.45, z: 0.15}
+  visualPrefab: {fileID: 167026207096243423, guid: 374b3e745e406c94da343c665f086584, type: 3}
+  visualOffset: {x: 0, y: -0.6674, z: -0.2451}
+  visualYawOffset: -90
+  tintedMaterials:
+  - {fileID: 2100000, guid: 7a174332889895049a898ea93eb0bb6d, type: 2}
+  - {fileID: 2100000, guid: 84de3e0389299b24192fd4c1b229454e, type: 2}
   driveConfig: {fileID: 11400000, guid: d9dceb404c57dbd4dbc9ed6d4496fdfc, type: 2}
   aimConfig: {fileID: 11400000, guid: 7d5dd7ecfe1526d4f922c4a7893f0901, type: 2}

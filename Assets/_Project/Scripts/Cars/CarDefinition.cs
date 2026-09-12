@@ -18,6 +18,27 @@ namespace MotorCombat.Cars
         [Header("Driver eye position, relative to the car's centre")]
         public Vector3 driverAnchorOffset = new Vector3(0f, 1f, 0.4f);
 
+        [Header("Visual")]
+        [Tooltip("Model to use as the car's visual. Leave empty for the placeholder box. " +
+                 "The collider is ALWAYS a box sized from the dimensions above -- the model is " +
+                 "decoration sitting inside it, and any colliders it ships with are stripped.")]
+        public GameObject visualPrefab;
+
+        [Tooltip("Position correction for the model, relative to the car's centre. Models are " +
+                 "commonly authored with their origin at the wheels' contact patch rather than " +
+                 "at the centre of the body; this lifts or drops the model to match.")]
+        public Vector3 visualOffset;
+
+        [Tooltip("Yaw correction in degrees. Unity's forward is +Z; set 180 if the model was " +
+                 "authored nose-first along -Z, or the car will appear to drive backwards.")]
+        public float visualYawOffset;
+
+        [Tooltip("Which of the model's materials take the team colour. Leave empty to tint every " +
+                 "renderer. List the body and paintwork materials to keep glass and interior out " +
+                 "of it. Tinting is applied per-instance, so the shared material assets are never " +
+                 "modified and the two cars can differ.")]
+        public Material[] tintedMaterials;
+
         [Header("Behaviour")]
         public DriveConfig driveConfig;
         public AimConfig aimConfig;
