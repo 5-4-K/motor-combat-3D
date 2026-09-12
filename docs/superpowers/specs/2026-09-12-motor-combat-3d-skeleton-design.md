@@ -1,7 +1,8 @@
 # Motor Combat 3D — Skeleton Design
 
 **Date:** 2026-09-12
-**Status:** Approved, not yet implemented
+**Status:** Implemented. Two sections were revised after play-testing — see §5 steps 3 and 4,
+which record where this design was wrong and why.
 **Scope:** Create the Unity project and the in-game skeleton. No menus, no combat, no netcode.
 
 ## 1. Purpose
@@ -193,8 +194,32 @@ Per `FixedUpdate`, in order:
    with `rb.linearDamping = 0`.** PhysX applies its own built-in damping with a different
    formulation, so leaving it non-zero would stack a second, differently-shaped decay on top
    and make the terminal-speed formula above wrong.
-4. **Yaw** — `rb.angularVelocity = Vector3.up * steer * turnRate`. Not gated on speed, so
-   turning while stationary works with no special case.
+
+   **The same rule extends to CONTACT FRICTION, which the original spec missed.** PhysX's
+   default material has friction 0.6, which on a 1200 kg car subtracts a flat
+   `mu * m * g` — about 7 kN — from every drive force. Because it is flat rather than
+   proportional it distorts the tuning curve rather than scaling it, and it hits the weaker
+   reverse thrust far harder than forward: measured in play, forward lost 24% of its thrust
+   and reverse 59%, which made reversing feel broken and put actual top speed 24% below what
+   the formula promises. `ApplyGrip` IS this model's tyre-friction, so PhysX friction was
+   both double-counting sideways resistance and adding unmodelled longitudinal resistance.
+   `CarFactory` therefore assigns every car a zero-friction `PhysicsMaterial` with
+   `frictionCombine = Minimum`, which wins over the ground's and wall's defaults so neither
+   needs its own. With it, the terminal-speed formula holds.
+4. **Yaw** — `rb.angularVelocity = Vector3.up * steer * turnRate * sense`. Never gated on
+   speed MAGNITUDE, so turning while stationary works with no special case. It does consult
+   the SIGN of travel: `sense` is `-1` while the car is travelling backwards faster than
+   `reverseEpsilon`, and `+1` otherwise.
+
+   **Revised 2026-09-12, after play-testing.** This originally read "not gated on speed" and
+   took no speed parameter at all, which conflated two different things. Ignoring speed
+   *magnitude* is correct and is what turn-in-place depends on. Ignoring the *sign* of travel
+   is not: a real car's steering sense inverts in reverse, because yaw rate goes as
+   `v/L * tan(delta)` and a negative `v` flips it — turn the wheel right while backing up and
+   the rear swings right. Without the flip, reversing steered the opposite way from every car
+   the player has ever driven. `DriveConfig.flipSteeringInReverse` selects between car-like
+   (`true`, default) and tank-like absolute steering (`false`); turn-in-place is identical
+   either way, since the flip only engages past `reverseEpsilon`.
 5. **Grip** — decompose velocity into the car's forward and right axes; decay the right
    component. The gap between where the nose points and where the velocity points is the
    drift.
@@ -297,6 +322,7 @@ Five ScriptableObject assets under `Assets/_Project/Configs/`.
 | | `brakeForce` | 40000 N |
 | | `reversePower` | 12000 N |
 | | `turnRate` | 90 deg/s |
+| | `flipSteeringInReverse` | true (car-like reverse steering) |
 | | `lateralGripStrength` | 6.0 /s |
 | `AimConfig` | `coneAngleDegrees` | 90 |
 | | `mouseSensitivity` | 0.12 deg/pixel |
@@ -321,6 +347,8 @@ that are easy to get subtly wrong and expensive to find later.
     (one 0.02 s step vs. two 0.01 s steps, within tolerance)
   - terminal speed converges to `enginePower / (mass * linearDrag)`
   - yaw is applied at full rate when speed is zero (turn-in-place)
+  - yaw inverts past `reverseEpsilon` when travelling backwards, does not invert below it,
+    and never inverts when `flipSteeringInReverse` is false
 - `AimMathTests`
   - accumulated delta clamps at both cone edges and does not wrap
   - zero delta leaves `aimYaw` unchanged

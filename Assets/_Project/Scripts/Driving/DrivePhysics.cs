@@ -79,12 +79,32 @@ namespace MotorCombat.Driving
         }
 
         /// <summary>
-        /// Degrees per second of yaw for a given steer input. Deliberately has no
-        /// speed parameter: that is what makes turning on the spot work.
+        /// Degrees per second of yaw for a given steer input.
+        ///
+        /// Yaw is never gated on speed MAGNITUDE — full steer gives the full rate
+        /// even at a standstill, which is what makes turning on the spot work. It
+        /// does consult the SIGN of travel: a real car's steering sense inverts in
+        /// reverse, because yaw rate goes as v/L * tan(delta) and a negative v
+        /// flips it. Turn the wheel right while backing up and the car's rear
+        /// swings right, not its nose.
+        ///
+        /// The inversion only engages once the car is genuinely travelling
+        /// backwards, past <paramref name="reverseEpsilon"/> — the same threshold
+        /// that decides brake-versus-reverse — so a stationary car still turns on
+        /// the spot in the direction you'd expect.
+        ///
+        /// Pass <paramref name="flipInReverse"/> false for tank-style absolute
+        /// steering, where a given key always rotates the car the same way.
         /// </summary>
-        public static float YawRate(float steer, float turnRateDegPerSec)
+        public static float YawRate(
+            float steer,
+            float turnRateDegPerSec,
+            float forwardSpeed,
+            bool flipInReverse,
+            float reverseEpsilon)
         {
-            return steer * turnRateDegPerSec;
+            float sense = (flipInReverse && forwardSpeed < -reverseEpsilon) ? -1f : 1f;
+            return steer * turnRateDegPerSec * sense;
         }
 
         /// <summary>

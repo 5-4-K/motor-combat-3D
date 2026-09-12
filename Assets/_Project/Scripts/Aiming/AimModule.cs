@@ -17,7 +17,14 @@ namespace MotorCombat.Aiming
         void Awake()
         {
             _car = GetComponent<CarController>();
+        }
 
+        void Start()
+        {
+            // Checked in Start, not Awake. Awake fires the instant AddComponent
+            // returns, which is BEFORE CarFactory assigns config on the same
+            // line — so an Awake check reports every factory-built car as
+            // misconfigured. By Start the whole object is assembled.
             if (config == null)
             {
                 Debug.LogError($"[MotorCombat] AimModule on '{name}' has no AimConfig assigned — this car will not aim.", this);

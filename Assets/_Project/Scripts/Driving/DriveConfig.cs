@@ -20,8 +20,13 @@ namespace MotorCombat.Driving
         public float reverseEpsilon = 0.5f;
 
         [Header("Turning")]
-        [Tooltip("Degrees per second at full steer. Not gated on speed — this is what allows turning on the spot.")]
+        [Tooltip("Degrees per second at full steer. Not gated on speed magnitude — this is what allows turning on the spot.")]
         public float turnRate = 90f;
+
+        [Tooltip("Invert the steering sense while reversing, the way a real car behaves — turn right in reverse and the rear swings right. " +
+                 "Off gives tank-style absolute steering, where a key always rotates the car the same way. " +
+                 "Turning on the spot is unaffected either way.")]
+        public bool flipSteeringInReverse = true;
 
         [Header("Grip")]
         [Tooltip("Sideways velocity decay RATE in 1/s. Lower drifts more. 0 is a hockey puck.")]

@@ -136,16 +136,50 @@ namespace MotorCombat.Tests
         // --- Yaw --------------------------------------------------------------
 
         /// <summary>
-        /// Turn-in-place works because YawRate never consults speed. This test
-        /// pins that: full steer yields the full configured rate, and the
-        /// signature offers nowhere for a speed term to creep in later.
+        /// Turn-in-place works because yaw never consults speed MAGNITUDE. Full
+        /// steer yields the full configured rate at a dead stop.
         /// </summary>
         [Test]
-        public void YawRate_IsFullRateAtFullSteer()
+        public void YawRate_IsFullRateAtFullSteer_WhenStationary()
         {
-            Assert.AreEqual(90f, DrivePhysics.YawRate(1f, 90f), 1e-4f);
-            Assert.AreEqual(-90f, DrivePhysics.YawRate(-1f, 90f), 1e-4f);
-            Assert.AreEqual(0f, DrivePhysics.YawRate(0f, 90f), 1e-4f);
+            Assert.AreEqual(90f, DrivePhysics.YawRate(1f, 90f, 0f, true, 0.5f), 1e-4f);
+            Assert.AreEqual(-90f, DrivePhysics.YawRate(-1f, 90f, 0f, true, 0.5f), 1e-4f);
+            Assert.AreEqual(0f, DrivePhysics.YawRate(0f, 90f, 0f, true, 0.5f), 1e-4f);
+        }
+
+        [Test]
+        public void YawRate_IsNotInvertedWhenDrivingForward()
+        {
+            Assert.AreEqual(90f, DrivePhysics.YawRate(1f, 90f, 20f, true, 0.5f), 1e-4f);
+        }
+
+        /// <summary>
+        /// A real car's steering sense inverts in reverse: yaw goes as
+        /// v/L * tan(delta), so a negative v flips it. Turn right while backing
+        /// up and the rear swings right.
+        /// </summary>
+        [Test]
+        public void YawRate_InvertsWhenTravellingBackwards()
+        {
+            Assert.AreEqual(-90f, DrivePhysics.YawRate(1f, 90f, -5f, true, 0.5f), 1e-4f);
+            Assert.AreEqual(90f, DrivePhysics.YawRate(-1f, 90f, -5f, true, 0.5f), 1e-4f);
+        }
+
+        /// <summary>
+        /// Below the reverse threshold the car is still essentially stationary,
+        /// so it must keep the intuitive turn-in-place sense rather than flipping
+        /// the moment it drifts a few centimetres backwards.
+        /// </summary>
+        [Test]
+        public void YawRate_DoesNotInvertBelowTheReverseThreshold()
+        {
+            Assert.AreEqual(90f, DrivePhysics.YawRate(1f, 90f, -0.2f, true, 0.5f), 1e-4f);
+        }
+
+        [Test]
+        public void YawRate_NeverInvertsWhenTheFlipIsDisabled()
+        {
+            Assert.AreEqual(90f, DrivePhysics.YawRate(1f, 90f, -20f, false, 0.5f), 1e-4f);
         }
     }
 }

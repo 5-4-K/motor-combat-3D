@@ -17,7 +17,14 @@ namespace MotorCombat.Driving
         void Awake()
         {
             _car = GetComponent<CarController>();
+        }
 
+        void Start()
+        {
+            // Checked in Start, not Awake. Awake fires the instant AddComponent
+            // returns, which is BEFORE CarFactory assigns config on the same
+            // line — so an Awake check reports every factory-built car as
+            // misconfigured. By Start the whole object is assembled.
             if (config == null)
             {
                 Debug.LogError($"[MotorCombat] DrivingModule on '{name}' has no DriveConfig assigned — this car will not drive.", this);
@@ -49,8 +56,16 @@ namespace MotorCombat.Driving
             // 2. Drag, applied manually so terminal speed matches the formula.
             body.linearVelocity = DrivePhysics.ApplyDrag(body.linearVelocity, config.linearDrag, dt);
 
-            // 3. Yaw, set directly. No speed gate, so turning on the spot works.
-            float yawRate = DrivePhysics.YawRate(input.steer, config.turnRate);
+            // 3. Yaw, set directly. Never gated on speed MAGNITUDE, so turning on
+            //    the spot works; the SIGN of travel can invert the steering sense
+            //    so reversing handles like a real car.
+            float forwardSpeed = Vector3.Dot(body.linearVelocity, forward);
+            float yawRate = DrivePhysics.YawRate(
+                input.steer,
+                config.turnRate,
+                forwardSpeed,
+                config.flipSteeringInReverse,
+                config.reverseEpsilon);
             body.angularVelocity = Vector3.up * (yawRate * Mathf.Deg2Rad);
 
             // 4. Grip. Whatever sideways velocity survives is the drift.
