@@ -47,14 +47,14 @@ Assets/_Project/
   Materials/  flat URP lit placeholder materials
   Scripts/
     Core/       CarInput, IInputProvider, ICarModule, CarController
-    Input/      LocalInputProvider, NullInputProvider, MotorCombat.inputactions
+    Controls/   LocalInputProvider, NullInputProvider
     Driving/    DrivingModule, DrivePhysics (pure), DriveConfig
     Aiming/     AimModule,     AimMath     (pure), AimConfig
     Ramming/    RammingModule, CarCollisionEvent      <- seam only
     Weapons/    IWeapon, WeaponModule                 <- seam only
     Cars/       CarDefinition, CarFactory
     Arena/      ArenaConfig, ArenaBuilder, ArenaMeshBuilder
-    CameraRig/  CameraRig, CameraConfig
+    Cameras/    CameraRig, CameraConfig
     HUD/        CrosshairHUD
     Bootstrap/  GameBootstrap
   Editor/
@@ -69,6 +69,11 @@ car models arrive.
 **One assembly definition per script folder.** This makes modularity enforced rather than
 aspirational: a reference from `Driving` to `Weapons` becomes a compile error instead of
 slow architectural drift. The cost is that each new script must live in the correct folder.
+
+Two folder names differ from the obvious choice, both to avoid a
+namespace-versus-type collision: `Cameras/` rather than `CameraRig/` (which would put a
+`CameraRig` class inside a `MotorCombat.CameraRig` namespace), and `Controls/` rather than
+`Input/` (where the identifier `Input` would resolve to the namespace).
 
 Every gameplay assembly references `MotorCombat.Core` and nothing else, except
 `MotorCombat.Cars` and `MotorCombat.Bootstrap`, which compose. `Editor/` and `Tests/` carry
@@ -285,6 +290,7 @@ Five ScriptableObject assets under `Assets/_Project/Configs/`.
 | | `wallHeight` | 2.5 m |
 | `CarDefinition` | `length` / `width` / `height` | 4.5 / 2.0 / 1.2 m |
 | | `mass` | 1200 kg |
+| | `driverAnchorOffset` (first-person eye) | (0, 1.0, 0.4) |
 | | references to `DriveConfig`, `AimConfig` | — |
 | `DriveConfig` | `enginePower` | 30000 N (top speed ~25 m/s) |
 | | `linearDrag` | 1.0 /s |
@@ -296,7 +302,7 @@ Five ScriptableObject assets under `Assets/_Project/Configs/`.
 | | `mouseSensitivity` | 0.12 deg/pixel |
 | `CameraConfig` | `mode` | `ThirdPerson` \| `FirstPerson` |
 | | `distance` / `height` / `pitch` / `fov` (TP) | 8 m / 3.5 m / 12 deg / 60 deg |
-| | `anchorOffset` / `fov` (FP) | (0, 1.0, 0.4) / 70 deg |
+| | `fov` (FP) | 70 deg |
 
 Arena radius derives from `radiusInCarLengths * carDef.length`, so changing the car length
 rescales the arena automatically when a real model replaces the box.
