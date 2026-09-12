@@ -1,0 +1,83 @@
+using System.IO;
+using UnityEditor;
+using UnityEditor.SceneManagement;
+using UnityEngine;
+using MotorCombat.Arena;
+using MotorCombat.Cameras;
+using MotorCombat.Cars;
+using MotorCombat.Bootstrap;
+
+namespace MotorCombat.EditorTools
+{
+    /// <summary>
+    /// Generates Arena.unity from code, so the scene is reproducible and its
+    /// construction is reviewable in a diff rather than as opaque YAML.
+    /// </summary>
+    public static class ArenaSceneBuilder
+    {
+        const string SceneDir = "Assets/_Project/Scenes";
+        const string ScenePath = SceneDir + "/Arena.unity";
+        const string ConfigDir = "Assets/_Project/Configs";
+
+        [MenuItem("Motor Combat/Rebuild Arena Scene")]
+        public static void BuildScene()
+        {
+            Directory.CreateDirectory(SceneDir);
+
+            var scene = EditorSceneManager.NewScene(
+                NewSceneSetup.EmptyScene, NewSceneMode.Single);
+
+            // --- Light ---
+            var lightObject = new GameObject("Directional Light");
+            var light = lightObject.AddComponent<Light>();
+            light.type = LightType.Directional;
+            light.color = Color.white;
+            light.intensity = 1.1f;
+            light.shadows = LightShadows.Soft;
+            lightObject.transform.rotation = Quaternion.Euler(48f, 138f, 0f);
+
+            // --- Camera ---
+            var cameraObject = new GameObject("Main Camera");
+            cameraObject.tag = "MainCamera";
+            var camera = cameraObject.AddComponent<Camera>();
+            camera.clearFlags = CameraClearFlags.Skybox;
+            camera.farClipPlane = 500f;
+            cameraObject.AddComponent<AudioListener>();
+
+            var rig = cameraObject.AddComponent<CameraRig>();
+            rig.config = Load<CameraConfig>("CameraConfig");
+
+            // --- Bootstrap ---
+            var bootstrapObject = new GameObject("GameBootstrap");
+            var bootstrap = bootstrapObject.AddComponent<GameBootstrap>();
+            bootstrap.arenaConfig = Load<ArenaConfig>("ArenaConfig");
+            bootstrap.carDefinition = Load<CarDefinition>("CarDefinition");
+            bootstrap.cameraRig = rig;
+
+            EditorSceneManager.SaveScene(scene, ScenePath);
+            RegisterInBuildSettings();
+
+            Debug.Log("[MotorCombat] Arena scene written to " + ScenePath);
+        }
+
+        static T Load<T>(string assetName) where T : ScriptableObject
+        {
+            string path = $"{ConfigDir}/{assetName}.asset";
+            var asset = AssetDatabase.LoadAssetAtPath<T>(path);
+            if (asset == null)
+            {
+                Debug.LogError($"[MotorCombat] Missing config asset at {path}. " +
+                               "Run Motor Combat > Create Default Configs first.");
+            }
+            return asset;
+        }
+
+        static void RegisterInBuildSettings()
+        {
+            EditorBuildSettings.scenes = new[]
+            {
+                new EditorBuildSettingsScene(ScenePath, true)
+            };
+        }
+    }
+}
