@@ -70,6 +70,6 @@ user.
 ## Not built yet
 
 Combat, damage, health, respawn. Menus, lobby, practice mode, car select. Netcode — only the
-`IInputProvider` seam exists. Audio. Real car art — the car is a scaled box.
+`IInputProvider` seam exists. Audio. The car is one model (Bastion); there is no car select.
 
 `RammingModule` and `WeaponModule` are deliberate empty seams, not oversights.

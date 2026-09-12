@@ -16,5 +16,5 @@ MonoBehaviour:
   thirdPersonDistance: 8
   thirdPersonHeight: 3.5
   thirdPersonPitch: 12
-  thirdPersonFov: 60
-  firstPersonFov: 70
+  thirdPersonHorizontalFov: 92
+  firstPersonHorizontalFov: 102

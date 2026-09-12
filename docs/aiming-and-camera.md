@@ -52,8 +52,8 @@ One Camera with a `CameraRig` component, switched by `CameraConfig.mode`:
 
 | Mode | Placement |
 |---|---|
-| `ThirdPerson` (0) | `distance` behind, `height` above, pitched down by `pitch`, yaw locked to the car |
-| `FirstPerson` (1) | at the car's `DriverAnchor` child, yaw locked to the car |
+| `ThirdPerson` (0) | `distance` behind, `height` above, pitched down by `pitch`, yaw locked to the car, 92° horizontal FOV |
+| `FirstPerson` (1) | at the car's `DriverAnchor` child, yaw locked to the car, 102° horizontal FOV |
 
 ### Camera yaw is rigid to the chassis and must never be smoothed
 
@@ -61,11 +61,43 @@ Lagging the yaw makes the crosshair drift across the screen during turns — tha
 the invariant above, broken. Positional smoothing is permissible later. **Yaw smoothing is
 not.** If a future change adds camera lag, it must not touch yaw.
 
-## Cone against FOV
+## Every monitor sees the same width of world
 
-At defaults a 60° vertical FOV at 16:9 is roughly 91.5° horizontal, against a 90° cone — so
-the crosshair travels almost exactly to the screen edges. That is convenient, not a
-constraint; the edge-clamp above covers wider cones.
+A competitive fairness rule. Both camera modes hold a fixed **horizontal** field of view —
+102° first person, 92° third person — whatever the player's monitor shape.
+
+Unity's camera takes a *vertical* FOV and derives the horizontal one from the aspect ratio,
+so by default wider screens see more to the sides. At a 70° vertical FOV a 21:9 player sees
+~118° across against ~102° on 16:9: a car closing from the side, visible earlier. In a car
+brawler that is exactly the information that matters.
+
+So `CameraRig` sets the vertical FOV every frame from the configured horizontal angle and the
+camera's current aspect, via `CameraFov.VerticalFor`. Wider screens lose some top and bottom
+instead, which costs nothing here: every car is grounded and aim is horizontal only. A window
+resize is picked up automatically.
+
+This is the approach Overwatch takes. The stricter alternative, locking everyone to 16:9 with
+black bars (StarCraft II), was rejected because it wastes screen area for protection this
+game does not need.
+
+### The crosshair follows the same rule
+
+`CrosshairHUD.size` and `edgeMargin` are authored in pixels **at a 1920 px reference width**
+and scale with the actual screen width. With a fixed horizontal view, a pixel covers the same
+angle for every player only when measured against width. Scaling by height would make the
+crosshair a different angular size on ultrawide.
+
+### Hits never depend on the monitor
+
+Aim is a world direction from the car. The crosshair only projects it onto the screen, so it
+sits over the same world point for every player; its distance from screen centre in pixels
+varies slightly with aspect, and that is harmless. Whether a shot hits is decided in the
+world.
+
+**When weapons are built, shots must originate at the car, not the camera.** Firing from the
+camera toward the crosshair would make first and third person hit differently — the
+third-person camera sits 3.5 m up and 8 m back. Identical across monitors either way, but
+unfair between camera modes.
 
 ## Known behaviour that looks like a bug
 
@@ -82,6 +114,10 @@ third only hides it.
 
 `AimMathTests` — 6 tests covering accumulate-and-clamp at both cone edges, no wrapping, and
 zero delta leaving `aimYaw` untouched.
+
+`CameraFovTests` — 5 tests: horizontal 102.45° / 91.49° reproduce 70° / 60° vertical at
+16:9, a square screen gives equal angles, wider screens always get less vertical view, and
+bad input (zero aspect, horizontal ≥ 180°) is clamped rather than producing NaN.
 
 The invariant itself is verified by playing, not by test — see the acceptance checklist in
 [workflow.md](workflow.md).

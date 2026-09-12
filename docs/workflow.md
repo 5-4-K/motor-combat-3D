@@ -47,15 +47,16 @@ is rejected with *"conflicts with a reserved Unity flag managed by this command.
 
 ## Tests
 
-59 EditMode tests, all pure — no scene, no GameObjects, sub-second.
+72 EditMode tests, sub-second. Nearly all test pure statics; `CarFactoryTests` builds throwaway GameObjects but loads no scene.
 
 | Fixture | Count |
 |---|---|
 | `DrivePhysicsTests` | 16 |
 | `ArenaMeshBuilderTests` | 15 |
 | `ArenaTextureBuilderTests` | 9 |
-| `CarFactoryTests` | 7 |
+| `CarFactoryTests` | 15 |
 | `AimMathTests` | 6 |
+| `CameraFovTests` | 5 |
 | `ArenaBuilderTests` | 6 |
 
 The test assembly carries the `UNITY_INCLUDE_TESTS` define constraint, so tests never ship

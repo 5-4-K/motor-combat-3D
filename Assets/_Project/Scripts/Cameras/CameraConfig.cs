@@ -18,9 +18,17 @@ namespace MotorCombat.Cameras
         public float thirdPersonDistance = 8f;
         public float thirdPersonHeight = 3.5f;
         public float thirdPersonPitch = 12f;
-        public float thirdPersonFov = 60f;
+
+        [Tooltip("HORIZONTAL field of view in degrees, identical for every monitor shape. " +
+                 "Wider screens see less top and bottom instead of more to the sides -- " +
+                 "a competitive fairness rule. 92 matches a 60 vertical FOV at 16:9.")]
+        [Range(30f, 170f)]
+        public float thirdPersonHorizontalFov = 92f;
 
         [Header("First person")]
-        public float firstPersonFov = 70f;
+        [Tooltip("HORIZONTAL field of view in degrees, identical for every monitor shape. " +
+                 "102 matches a 70 vertical FOV at 16:9.")]
+        [Range(30f, 170f)]
+        public float firstPersonHorizontalFov = 102f;
     }
 }

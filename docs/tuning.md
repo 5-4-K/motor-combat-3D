@@ -27,14 +27,13 @@ change.
 
 | Field | Default | Notes |
 |---|---|---|
-| `coneAngleDegrees` | 140 | Total cone; aim clamps to ±70 |
+| `coneAngleDegrees` | 100 | Total cone; aim clamps to ±50 |
 | `mouseSensitivity` | 0.12 °/pixel | Never multiplied by deltaTime |
 
-At 140° the cone is **wider than the camera sees**: a 60° vertical FOV at 16:9 is about 91.5°
-horizontal, so beyond roughly ±46° the aim points off-screen and the crosshair pins to the
-screen edge with a colour tint rather than tracking the true aim direction. Intentional if
-you want a wide firing arc; widen `thirdPersonFov` if you want the crosshair to keep
-tracking all the way to the cone limits.
+Against the 102° first-person view the crosshair travels almost exactly edge to edge. In
+third person (92° view) it still stays on-screen, because the camera sits 8 m behind the car
+and a point 40 m out appears nearer the centre than its aim angle suggests — edge to edge
+there is about 108°. Because the horizontal view is fixed, both hold on every monitor shape.
 
 ## CameraConfig
 
@@ -44,8 +43,13 @@ tracking all the way to the cone limits.
 | `thirdPersonDistance` | 8 m | |
 | `thirdPersonHeight` | 3.5 m | |
 | `thirdPersonPitch` | 12° | |
-| `thirdPersonFov` | 60° | ~91.5° horizontal at 16:9, against the 90° cone |
-| `firstPersonFov` | 70° | |
+| `thirdPersonHorizontalFov` | 92° | **Horizontal.** Equals a 60° vertical FOV at 16:9 |
+| `firstPersonHorizontalFov` | 102° | **Horizontal.** Equals a 70° vertical FOV at 16:9 |
+
+Both FOVs are **horizontal and identical for every monitor shape** — a competitive fairness
+rule. Unity's camera takes a vertical FOV, so `CameraRig` derives it each frame from the
+screen's aspect ratio. Wider screens see less top and bottom rather than more to the sides.
+See [aiming-and-camera.md](aiming-and-camera.md#every-monitor-sees-the-same-width-of-world).
 
 Yaw is rigid to the chassis in both modes and must stay that way — see
 [aiming-and-camera.md](aiming-and-camera.md#camera-yaw-is-rigid-to-the-chassis-and-must-never-be-smoothed).
@@ -69,7 +73,7 @@ Yaw is rigid to the chassis in both modes and must stay that way — see
 |---|---|---|
 | `length` / `width` / `height` | 4.657 / 2.208 / 1.342 m | Measured from the Bastion model. Drives the BoxCollider |
 | `mass` | 1200 kg | Feeds the terminal-speed formula |
-| `driverAnchorOffset` | (0, 0.45, 0.15) | First-person eye, relative to car centre. ~1.12 m above ground — an estimate, tune by eye |
+| `driverAnchorOffset` | (0, 0.40, 0.15) | First-person eye, relative to car centre — about 1.07 m above ground. Move it rather than widening FOV if the dashboard shows |
 | `visualPrefab` | Bastion | Empty falls back to the placeholder box |
 | `visualOffset` | (0, −0.667, −0.245) | Centres the model on the collider; the model's origin is at its wheels |
 | `visualYawOffset` | −90° | The model is authored nose-along-+X; Unity's forward is +Z |

@@ -8,6 +8,10 @@ namespace MotorCombat.Cameras
     /// chassis in both modes and is never smoothed: lagging it would drag the
     /// crosshair across the screen during turns, which is exactly the thing the
     /// aiming design guarantees will not happen.
+    ///
+    /// FOV is set every frame from a fixed HORIZONTAL angle and the camera's
+    /// current aspect, so every monitor shape sees the same width of world and a
+    /// window resize is picked up automatically. See CameraFov.
     /// </summary>
     [RequireComponent(typeof(Camera))]
     public class CameraRig : MonoBehaviour
@@ -49,7 +53,7 @@ namespace MotorCombat.Cameras
         {
             Transform anchor = _driverAnchor != null ? _driverAnchor : _target.transform;
 
-            _camera.fieldOfView = config.firstPersonFov;
+            _camera.fieldOfView = CameraFov.VerticalFor(config.firstPersonHorizontalFov, _camera.aspect);
             transform.position = anchor.position;
             transform.rotation = Quaternion.Euler(0f, ChassisYaw(), 0f);
         }
@@ -62,7 +66,7 @@ namespace MotorCombat.Cameras
             Vector3 offset = flatRotation * new Vector3(0f, 0f, -config.thirdPersonDistance)
                              + Vector3.up * config.thirdPersonHeight;
 
-            _camera.fieldOfView = config.thirdPersonFov;
+            _camera.fieldOfView = CameraFov.VerticalFor(config.thirdPersonHorizontalFov, _camera.aspect);
             transform.position = _target.transform.position + offset;
             transform.rotation = Quaternion.Euler(config.thirdPersonPitch, yaw, 0f);
         }
