@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: ca821b8977ac0ef4fb200fb1e4b0c872
+guid: b715c58c15377234fb15cca4d7f511b0
 NativeFormatImporter:
   externalObjects: {}
   mainObjectFileID: 2100000
@@ -11,5 +11,5 @@ AssetOrigin:
   productId: 242760
   packageName: 50 Free PBR Materials
   packageVersion: 1.0
-  assetPath: Assets/CaptainCatSparrow/PBR_Materials/500_Materials/Materials/Ground/mGround_4.mat
+  assetPath: Assets/CaptainCatSparrow/PBR_Materials/500_Materials/Materials/Panel/mPanel_1.mat
   uploadId: 554676

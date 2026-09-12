@@ -15,3 +15,6 @@ MonoBehaviour:
   radiusInCarLengths: 10
   wallHeight: 2.5
   segments: 96
+  groundMaterial: {fileID: 2100000, guid: b715c58c15377234fb15cca4d7f511b0, type: 2}
+  wallMaterial: {fileID: 2100000, guid: 0f5028ff6162d1349addbfb3eb0f72e4, type: 2}
+  tileSizeInCarLengths: 5
