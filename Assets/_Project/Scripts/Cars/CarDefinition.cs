@@ -8,7 +8,7 @@ namespace MotorCombat.Cars
     public class CarDefinition : ScriptableObject
     {
         [Header("Dimensions (metres)")]
-        [Tooltip("Length also sets the arena size, via ArenaConfig.radiusInCarLengths.")]
+        [Tooltip("Physical length in metres. Arena size is independent of this -- see ArenaConfig.radiusMetres.")]
         public float length = 4.5f;
         public float width = 2f;
         public float height = 1.2f;

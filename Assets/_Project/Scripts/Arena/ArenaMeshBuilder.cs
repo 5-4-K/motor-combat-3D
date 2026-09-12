@@ -71,6 +71,7 @@ namespace MotorCombat.Arena
             mesh.SetNormals(normals);
             mesh.SetUVs(0, uvs);
             mesh.SetTriangles(triangles, 0);
+            mesh.RecalculateTangents();   // see BuildRing: normal maps need these
             mesh.RecalculateBounds();
             return mesh;
         }
@@ -144,6 +145,14 @@ namespace MotorCombat.Arena
             mesh.SetNormals(normals);
             mesh.SetUVs(0, uvs);
             mesh.SetTriangles(triangles, 0);
+
+            // Normal maps and parallax maps shade in TANGENT space: the shader
+            // needs a per-vertex tangent to know which way U runs across the
+            // surface. Leave it out and the tangent array is empty, the shader
+            // reads zeros, the basis degenerates, and the perturbed normal
+            // flips per triangle -- the wall shades in visible chunks and the
+            // floor's highlights smear. Must follow UVs and normals.
+            mesh.RecalculateTangents();
             mesh.RecalculateBounds();
             return mesh;
         }

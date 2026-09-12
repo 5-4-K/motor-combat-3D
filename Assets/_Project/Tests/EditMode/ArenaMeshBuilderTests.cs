@@ -198,5 +198,45 @@ namespace MotorCombat.Tests
             Assert.AreEqual(0f, uvs[0].y, 1e-4f, "bottom row sits at v = 0");
             Assert.AreEqual(2.5f / Tile, uvs[1].y, 1e-4f, "top row is height/tileSize, not 1");
         }
+
+        // --- Tangents ---------------------------------------------------------
+
+        /// <summary>
+        /// Normal-mapped and parallax-mapped materials shade in TANGENT space.
+        /// A mesh with no tangents leaves the shader reading zeros, the basis
+        /// degenerates, and the perturbed normal flips per triangle: the wall
+        /// shades in visible chunks and the floor's highlights smear. Nothing
+        /// about the geometry looks wrong, which is what makes it hard to spot.
+        /// </summary>
+        [Test]
+        public void Disc_HasUsableTangentsForNormalMappedMaterials()
+        {
+            AssertUsableTangents(ArenaMeshBuilder.BuildDisc(45f, 32, Tile));
+        }
+
+        [Test]
+        public void Ring_HasUsableTangentsForNormalMappedMaterials()
+        {
+            AssertUsableTangents(ArenaMeshBuilder.BuildRing(45f, 2.5f, 32, Tile));
+        }
+
+        static void AssertUsableTangents(Mesh mesh)
+        {
+            var tangents = mesh.tangents;
+            var normals = mesh.normals;
+
+            Assert.AreEqual(mesh.vertexCount, tangents.Length, "one tangent per vertex");
+
+            for (int i = 0; i < tangents.Length; i++)
+            {
+                var tangent = new Vector3(tangents[i].x, tangents[i].y, tangents[i].z);
+
+                Assert.Greater(tangent.sqrMagnitude, 1e-6f, $"tangent {i} is degenerate");
+                Assert.AreEqual(0f, Vector3.Dot(tangent.normalized, normals[i]), 1e-3f,
+                    $"tangent {i} must lie in the surface, perpendicular to the normal");
+                Assert.AreEqual(1f, Mathf.Abs(tangents[i].w), 1e-3f,
+                    $"tangent {i} carries no handedness sign");
+            }
+        }
     }
 }

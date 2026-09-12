@@ -12,9 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fabe0da2a9e5e4447a3b2cd23842a8b3, type: 3}
   m_Name: ArenaConfig
   m_EditorClassIdentifier: MotorCombat.Arena::MotorCombat.Arena.ArenaConfig
-  radiusInCarLengths: 10
+  radiusMetres: 45
   wallHeight: 2.5
   segments: 96
   groundMaterial: {fileID: 2100000, guid: b715c58c15377234fb15cca4d7f511b0, type: 2}
   wallMaterial: {fileID: 2100000, guid: 0f5028ff6162d1349addbfb3eb0f72e4, type: 2}
-  tileSizeInCarLengths: 5
+  groundTileMetres: 4
+  wallTileMetres: 2.5
+  gridCellInCarLengths: 1
