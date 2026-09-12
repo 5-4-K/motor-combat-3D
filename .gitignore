@@ -107,3 +107,12 @@ InitTestScene*.unity*
 
 # Subagent-driven development scratch workspace
 /.superpowers/
+
+# Unity CLI test reports
+/test-results.xml
+/CodeCoverage/
+
+# Claude Code project configuration is tracked on purpose
+!.claude/skills/
+!.claude/settings.json
+!.claude/hooks/
