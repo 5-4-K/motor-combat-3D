@@ -47,8 +47,12 @@ namespace MotorCombat.HUD
             bool behindCamera = screenPoint.z < 0f;
             if (behindCamera)
             {
-                // Mirror it so a point behind the camera pins to the correct side.
+                // WorldToScreenPoint mirrors through the screen centre on BOTH axes
+                // when the point is behind the camera, because both terms divide by a
+                // negative view-space z. Un-mirror both, then let the clamp below push
+                // the crosshair to the correct edge.
                 screenPoint.x = Screen.width - screenPoint.x;
+                screenPoint.y = Screen.height - screenPoint.y;
             }
 
             float clampedX = Mathf.Clamp(screenPoint.x, edgeMargin, Screen.width - edgeMargin);
