@@ -13,8 +13,6 @@ namespace MotorCombat.Cars
     /// </summary>
     public static class CarFactory
     {
-        public const string DriverAnchorName = "DriverAnchor";
-
         public static CarController Spawn(
             CarDefinition definition,
             Vector3 position,
@@ -49,7 +47,7 @@ namespace MotorCombat.Cars
             Object.DestroyImmediate(nose.GetComponent<BoxCollider>());
             Paint(nose, Color.white);
 
-            var anchor = new GameObject(DriverAnchorName);
+            var anchor = new GameObject(CarController.DriverAnchorName);
             anchor.transform.SetParent(car.transform, false);
             anchor.transform.localPosition = definition.driverAnchorOffset;
 

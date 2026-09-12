@@ -37,6 +37,12 @@ namespace MotorCombat.EditorTools
 
             Directory.CreateDirectory(SceneDir);
 
+            if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
+            {
+                Debug.Log("[MotorCombat] Scene rebuild cancelled.");
+                return;
+            }
+
             var scene = EditorSceneManager.NewScene(
                 NewSceneSetup.EmptyScene, NewSceneMode.Single);
 

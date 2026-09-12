@@ -119,7 +119,7 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &338966861
+--- !u!1 &571446803
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -127,56 +127,8 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 338966863}
-  - component: {fileID: 338966862}
-  m_Layer: 0
-  m_Name: GameBootstrap
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &338966862
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 338966861}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 753521fe62fd6b442990ea4df0499bf9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: MotorCombat.Bootstrap::MotorCombat.Bootstrap.GameBootstrap
-  arenaConfig: {fileID: 11400000, guid: bbda7c2dfbd14d1458316d51d350aa97, type: 2}
-  carDefinition: {fileID: 11400000, guid: cbaf45bdd7f5c4d49ba676aa14ea0d7f, type: 2}
-  cameraRig: {fileID: 2026215360}
-  dummyDistanceInCarLengths: 4
---- !u!4 &338966863
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 338966861}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1264467491
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1264467493}
-  - component: {fileID: 1264467492}
+  - component: {fileID: 571446805}
+  - component: {fileID: 571446804}
   m_Layer: 0
   m_Name: Directional Light
   m_TagString: Untagged
@@ -184,13 +136,13 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!108 &1264467492
+--- !u!108 &571446804
 Light:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1264467491}
+  m_GameObject: {fileID: 571446803}
   m_Enabled: 1
   serializedVersion: 13
   m_Type: 1
@@ -249,13 +201,13 @@ Light:
   m_LightUnit: 1
   m_LuxAtDistance: 1
   m_EnableSpotReflector: 1
---- !u!4 &1264467493
+--- !u!4 &571446805
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1264467491}
+  m_GameObject: {fileID: 571446803}
   serializedVersion: 2
   m_LocalRotation: {x: 0.1457614, y: 0.85286814, z: -0.37972137, w: 0.32738546}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -264,7 +216,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &2026215359
+--- !u!1 &872022300
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -272,10 +224,10 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 2026215363}
-  - component: {fileID: 2026215362}
-  - component: {fileID: 2026215361}
-  - component: {fileID: 2026215360}
+  - component: {fileID: 872022304}
+  - component: {fileID: 872022303}
+  - component: {fileID: 872022302}
+  - component: {fileID: 872022301}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -283,34 +235,34 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &2026215360
+--- !u!114 &872022301
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2026215359}
+  m_GameObject: {fileID: 872022300}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e0c5891f68c1ff48bdb1f2081afa755, type: 3}
   m_Name: 
   m_EditorClassIdentifier: MotorCombat.Cameras::MotorCombat.Cameras.CameraRig
   config: {fileID: 11400000, guid: fc3f83a11845cb44293f40810ad73854, type: 2}
---- !u!81 &2026215361
+--- !u!81 &872022302
 AudioListener:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2026215359}
+  m_GameObject: {fileID: 872022300}
   m_Enabled: 1
---- !u!20 &2026215362
+--- !u!20 &872022303
 Camera:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2026215359}
+  m_GameObject: {fileID: 872022300}
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 1
@@ -355,13 +307,61 @@ Camera:
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
---- !u!4 &2026215363
+--- !u!4 &872022304
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2026215359}
+  m_GameObject: {fileID: 872022300}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &950023933
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 950023935}
+  - component: {fileID: 950023934}
+  m_Layer: 0
+  m_Name: GameBootstrap
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &950023934
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 950023933}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 753521fe62fd6b442990ea4df0499bf9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: MotorCombat.Bootstrap::MotorCombat.Bootstrap.GameBootstrap
+  arenaConfig: {fileID: 11400000, guid: bbda7c2dfbd14d1458316d51d350aa97, type: 2}
+  carDefinition: {fileID: 11400000, guid: cbaf45bdd7f5c4d49ba676aa14ea0d7f, type: 2}
+  cameraRig: {fileID: 872022301}
+  dummyDistanceInCarLengths: 4
+--- !u!4 &950023935
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 950023933}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -374,6 +374,6 @@ Transform:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
-  - {fileID: 1264467493}
-  - {fileID: 2026215363}
-  - {fileID: 338966863}
+  - {fileID: 571446805}
+  - {fileID: 872022304}
+  - {fileID: 950023935}

@@ -7,7 +7,8 @@
         "MotorCombat.Core",
         "MotorCombat.Aiming",
         "MotorCombat.Driving",
-        "MotorCombat.Arena"
+        "MotorCombat.Arena",
+        "MotorCombat.Cars"
     ],
     "includePlatforms": ["Editor"],
     "excludePlatforms": [],

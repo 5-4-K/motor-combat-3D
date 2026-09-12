@@ -1,6 +1,5 @@
 using UnityEngine;
 using MotorCombat.Core;
-using MotorCombat.Cars;
 
 namespace MotorCombat.Cameras
 {
@@ -28,7 +27,7 @@ namespace MotorCombat.Cameras
         {
             _target = target;
             _driverAnchor = target != null
-                ? target.transform.Find(CarFactory.DriverAnchorName)
+                ? target.transform.Find(CarController.DriverAnchorName)
                 : null;
         }
 

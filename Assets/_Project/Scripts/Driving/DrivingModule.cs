@@ -17,6 +17,11 @@ namespace MotorCombat.Driving
         void Awake()
         {
             _car = GetComponent<CarController>();
+
+            if (config == null)
+            {
+                Debug.LogError($"[MotorCombat] DrivingModule on '{name}' has no DriveConfig assigned — this car will not drive.", this);
+            }
         }
 
         public void Tick(in CarInput input, float dt)

@@ -12,6 +12,9 @@ namespace MotorCombat.Core
     [RequireComponent(typeof(Rigidbody))]
     public class CarController : MonoBehaviour
     {
+        /// <summary>Name of the child transform marking the first-person eye position.</summary>
+        public const string DriverAnchorName = "DriverAnchor";
+
         public Rigidbody Body { get; private set; }
 
         /// <summary>Aim angle in degrees, relative to the car's forward. Written by the aim module.</summary>

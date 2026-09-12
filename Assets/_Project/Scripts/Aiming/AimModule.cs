@@ -17,6 +17,11 @@ namespace MotorCombat.Aiming
         void Awake()
         {
             _car = GetComponent<CarController>();
+
+            if (config == null)
+            {
+                Debug.LogError($"[MotorCombat] AimModule on '{name}' has no AimConfig assigned — this car will not aim.", this);
+            }
         }
 
         public void FrameTick(in CarInput input, float dt)
