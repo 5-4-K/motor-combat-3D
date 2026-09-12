@@ -12,5 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5925aedd34b87764aacf5150b2371d41, type: 3}
   m_Name: AimConfig
   m_EditorClassIdentifier: MotorCombat.Aiming::MotorCombat.Aiming.AimConfig
-  coneAngleDegrees: 140
+  coneAngleDegrees: 100
   mouseSensitivity: 0.12
