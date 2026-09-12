@@ -27,8 +27,14 @@ change.
 
 | Field | Default | Notes |
 |---|---|---|
-| `coneAngleDegrees` | 90 | Total cone; aim clamps to ±45 |
+| `coneAngleDegrees` | 140 | Total cone; aim clamps to ±70 |
 | `mouseSensitivity` | 0.12 °/pixel | Never multiplied by deltaTime |
+
+At 140° the cone is **wider than the camera sees**: a 60° vertical FOV at 16:9 is about 91.5°
+horizontal, so beyond roughly ±46° the aim points off-screen and the crosshair pins to the
+screen edge with a colour tint rather than tracking the true aim direction. Intentional if
+you want a wide firing arc; widen `thirdPersonFov` if you want the crosshair to keep
+tracking all the way to the cone limits.
 
 ## CameraConfig
 
@@ -61,12 +67,19 @@ Yaw is rigid to the chassis in both modes and must stay that way — see
 
 | Field | Default | Notes |
 |---|---|---|
-| `length` / `width` / `height` | 4.5 / 2.0 / 1.2 m | Drives the box mesh and the BoxCollider |
+| `length` / `width` / `height` | 4.657 / 2.208 / 1.342 m | Measured from the Bastion model. Drives the BoxCollider |
 | `mass` | 1200 kg | Feeds the terminal-speed formula |
-| `driverAnchorOffset` | (0, 1.0, 0.4) | First-person eye position, relative to car centre |
+| `driverAnchorOffset` | (0, 0.45, 0.15) | First-person eye, relative to car centre. ~1.12 m above ground — an estimate, tune by eye |
+| `visualPrefab` | Bastion | Empty falls back to the placeholder box |
+| `visualOffset` | (0, −0.667, −0.245) | Centres the model on the collider; the model's origin is at its wheels |
+| `visualYawOffset` | −90° | The model is authored nose-along-+X; Unity's forward is +Z |
+| `tintedMaterials` | Body, Door | Which materials take the team colour. Empty tints every renderer |
 | `driveConfig` / `aimConfig` | references | |
 
 Changing `length` no longer resizes the arena — that coupling was removed deliberately.
+
+The collider is **always** a box of the dimensions above, and any collider shipped inside
+`visualPrefab` is stripped on spawn.
 
 ## Replacing the box with a real car model
 

@@ -17,8 +17,9 @@ namespace MotorCombat.HUD
         [Tooltip("How far along the aim ray the crosshair is projected, in metres.")]
         public float projectionDistance = 40f;
 
-        [Tooltip("Crosshair arm length in pixels.")]
-        public float size = 10f;
+        [Tooltip("Crosshair arm length in pixels, measured from the centre outwards, " +
+                 "so the drawn cross spans twice this.")]
+        public float size = 30f;
 
         [Tooltip("Pixels of margin when the aim leaves the viewport.")]
         public float edgeMargin = 24f;
