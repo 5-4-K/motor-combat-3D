@@ -1,12 +1,17 @@
 {
-    "name": "MotorCombat.Cars",
-    "rootNamespace": "MotorCombat.Cars",
+    "name": "MotorCombat.Bootstrap",
+    "rootNamespace": "MotorCombat.Bootstrap",
     "references": [
         "MotorCombat.Core",
+        "MotorCombat.Controls",
         "MotorCombat.Driving",
         "MotorCombat.Aiming",
         "MotorCombat.Ramming",
-        "MotorCombat.Weapons"
+        "MotorCombat.Weapons",
+        "MotorCombat.Cars",
+        "MotorCombat.Arena",
+        "MotorCombat.Cameras",
+        "MotorCombat.HUD"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

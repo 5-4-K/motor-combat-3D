@@ -1,7 +1,7 @@
 {
     "name": "MotorCombat.Cameras",
     "rootNamespace": "MotorCombat.Cameras",
-    "references": ["MotorCombat.Core"],
+    "references": ["MotorCombat.Core", "MotorCombat.Cars"],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

@@ -1,13 +1,7 @@
 {
-    "name": "MotorCombat.Cars",
-    "rootNamespace": "MotorCombat.Cars",
-    "references": [
-        "MotorCombat.Core",
-        "MotorCombat.Driving",
-        "MotorCombat.Aiming",
-        "MotorCombat.Ramming",
-        "MotorCombat.Weapons"
-    ],
+    "name": "MotorCombat.HUD",
+    "rootNamespace": "MotorCombat.HUD",
+    "references": ["MotorCombat.Core"],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

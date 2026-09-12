@@ -3,11 +3,16 @@
     "rootNamespace": "MotorCombat.EditorTools",
     "references": [
         "MotorCombat.Core",
+        "MotorCombat.Controls",
         "MotorCombat.Driving",
         "MotorCombat.Aiming",
+        "MotorCombat.Ramming",
+        "MotorCombat.Weapons",
         "MotorCombat.Arena",
         "MotorCombat.Cameras",
-        "MotorCombat.Cars"
+        "MotorCombat.Cars",
+        "MotorCombat.HUD",
+        "MotorCombat.Bootstrap"
     ],
     "includePlatforms": ["Editor"],
     "excludePlatforms": [],
