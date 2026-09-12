@@ -22,6 +22,19 @@ namespace MotorCombat.EditorTools
         [MenuItem("Motor Combat/Rebuild Arena Scene")]
         public static void BuildScene()
         {
+            var cameraConfig = Load<CameraConfig>("CameraConfig");
+            var arenaConfig = Load<ArenaConfig>("ArenaConfig");
+            var carDefinition = Load<CarDefinition>("CarDefinition");
+
+            if (cameraConfig == null || arenaConfig == null || carDefinition == null)
+            {
+                Debug.LogError(
+                    "[MotorCombat] Aborting scene build: one or more config assets are missing. " +
+                    "Run Motor Combat > Create Default Configs first. " +
+                    "The open scene and the build settings are unchanged.");
+                return;
+            }
+
             Directory.CreateDirectory(SceneDir);
 
             var scene = EditorSceneManager.NewScene(
@@ -45,13 +58,13 @@ namespace MotorCombat.EditorTools
             cameraObject.AddComponent<AudioListener>();
 
             var rig = cameraObject.AddComponent<CameraRig>();
-            rig.config = Load<CameraConfig>("CameraConfig");
+            rig.config = cameraConfig;
 
             // --- Bootstrap ---
             var bootstrapObject = new GameObject("GameBootstrap");
             var bootstrap = bootstrapObject.AddComponent<GameBootstrap>();
-            bootstrap.arenaConfig = Load<ArenaConfig>("ArenaConfig");
-            bootstrap.carDefinition = Load<CarDefinition>("CarDefinition");
+            bootstrap.arenaConfig = arenaConfig;
+            bootstrap.carDefinition = carDefinition;
             bootstrap.cameraRig = rig;
 
             EditorSceneManager.SaveScene(scene, ScenePath);

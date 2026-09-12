@@ -68,6 +68,7 @@ namespace MotorCombat.Bootstrap
             if (carDefinition.driveConfig == null) { Debug.LogError("[MotorCombat] CarDefinition.driveConfig is not assigned."); return false; }
             if (carDefinition.aimConfig == null) { Debug.LogError("[MotorCombat] CarDefinition.aimConfig is not assigned."); return false; }
             if (cameraRig == null) { Debug.LogError("[MotorCombat] GameBootstrap.cameraRig is not assigned."); return false; }
+            if (cameraRig.config == null) { Debug.LogError("[MotorCombat] CameraRig.config is not assigned."); return false; }
             return true;
         }
     }
