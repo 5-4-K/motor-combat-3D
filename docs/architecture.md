@@ -1,0 +1,146 @@
+# Architecture
+
+## The shape of it
+
+```
+LocalInputProvider ── implements IInputProvider
+        │
+        │  CarInput { throttle, steer, aimDeltaX }
+        ▼
+CarController ── owns the Rigidbody and aimYaw, ticks its ICarModules
+        │
+        ├── AimModule      (Update)       aimYaw += delta × sens, clamped to ±cone/2
+        ├── DrivingModule  (FixedUpdate)  thrust │ brake/reverse │ yaw │ grip
+        ├── RammingModule  (collision)    OnCollisionEnter → CarCollisionEvent   [stub]
+        └── WeaponModule   (—)            reads CarController.AimDirection       [stub]
+
+CameraRig    (LateUpdate) ← car transform + CameraMode
+CrosshairHUD (LateUpdate) ← CarController.AimDirection, projected through the camera
+```
+
+## Modularity is compile-enforced, not aspirational
+
+**One assembly definition per script folder** — 13 of them. A reference from `Driving` to
+`Weapons` is a compile error, not slow architectural drift. Every gameplay assembly
+references `MotorCombat.Core` and nothing else; only `MotorCombat.Cars` and
+`MotorCombat.Bootstrap` compose across modules.
+
+```
+MotorCombat.Core      Aiming    Arena     Bootstrap  Cameras   Cars
+             Controls Driving   HUD       Ramming    Weapons
+             EditorTools        Tests.EditMode
+```
+
+The cost is that a new script must go in the right folder. That is the point.
+
+Two folder names avoid a namespace-versus-type collision: `Cameras/` rather than
+`CameraRig/` (which would put a `CameraRig` class inside a `MotorCombat.CameraRig`
+namespace), and `Controls/` rather than `Input/` (where the identifier `Input` would
+resolve to the namespace).
+
+### Where it stops
+
+`CarFactory.Spawn` hard-codes the module set, so a car with a different *loadout* means
+editing that file. Tuning is data; composition is not, yet.
+
+## Thin adapters over pure cores
+
+Each module is a MonoBehaviour that reads config, calls a static pure function, and writes
+the result to the Rigidbody. The maths lives in `DrivePhysics` and `AimMath` — no
+`GameObject`, no scene, testable directly. This is why 59 EditMode tests run in under a
+second with nothing instantiated.
+
+When adding a module, put the decision in a pure static and keep the MonoBehaviour dumb.
+
+## CarController is deliberately dumb
+
+It owns the `Rigidbody`, holds `aimYaw`, exposes `AimDirection`, and hands a `CarInput` to
+every attached `ICarModule`. No physics, no game rules. Deleting `DrivingModule` and
+dropping in a replacement must require no change to `CarController`.
+
+Modules are collected in `Start()`, not `Awake()`. `Awake` fires the instant `AddComponent`
+returns — before `CarFactory` has finished assembling the object on the same line. A guard
+placed in `Awake` reported every factory-built car as misconfigured. Anything that depends
+on the object being complete belongs in `Start`.
+
+## Input is sampled exactly once per Update
+
+`IInputProvider.Sample()` is called once per `Update` and the result cached for
+`FixedUpdate`. This is load-bearing.
+
+`aimDeltaX` is a per-frame accumulation that must be consumed once and only once.
+`throttle` and `steer` are level values any number of readers can read harmlessly. Sampling
+again inside `FixedUpdate` would either double-consume the mouse delta or silently drop it,
+depending on how many physics steps fell inside the frame.
+
+- **`Update`** — sample once, cache, call `FrameTick` on every module. Aim consumes
+  `aimDeltaX` here.
+- **`FixedUpdate`** — call `Tick` with the **cached** struct, reading only level fields.
+
+A frame containing two physics steps therefore applies throttle twice — correct, it is a
+force applied over time — and consumes the mouse delta once, also correct.
+
+### Why aim runs in Update and driving in FixedUpdate
+
+Mouse delta is reported per frame, so aim must run per frame. **The delta must never be
+multiplied by `deltaTime`**: a mouse delta is already a displacement, not a rate, and
+scaling it by frame time makes sensitivity frame-rate dependent.
+
+Driving applies forces to a `Rigidbody`, so it runs in `FixedUpdate`. The Rigidbody uses
+`RigidbodyInterpolation.Interpolate` so the camera, reading it in `LateUpdate`, sees smooth
+motion rather than physics-step judder.
+
+## The netcode seam
+
+`IInputProvider` exposes one method, `CarInput Sample()`.
+
+| Implementation | Returns |
+|---|---|
+| `LocalInputProvider` | keyboard and mouse |
+| `NullInputProvider` | a zeroed struct — the dummy car |
+| *future* `NetworkInputProvider` | what the server sent |
+| *future* `BotInputProvider` | what an AI decided |
+
+None of them require the driving code to know the difference. Networking is not
+implemented; only this seam exists.
+
+## Ramming and Weapons are seams, not features
+
+Both ship as real files with real interfaces and no behaviour. `RammingModule` catches
+collisions and raises a `CarCollisionEvent` carrying impact normal, relative velocity and
+the other car, then does nothing with it. `WeaponModule` exposes a fire entry point that
+no-ops.
+
+They exist so implementing combat means filling in a body rather than re-architecting.
+
+## Scene composition
+
+`Arena.unity` holds a directional light, one Camera with `CameraRig`, and one
+`GameBootstrap` referencing the config assets. Everything else is built at runtime, because
+a parameterised circular arena is a formula rather than hand-placed geometry.
+
+```
+GameBootstrap.Start()
+  ArenaBuilder.Build(arenaConfig, carDef.length)
+      Ground : procedural disc mesh + MeshCollider
+      Wall   : procedural ring mesh + MeshCollider
+  CarFactory.Spawn(carDef, LocalInputProvider)  → player car at origin, facing +Z
+  CarFactory.Spawn(carDef, NullInputProvider)   → dummy car ahead on +Z
+  cameraRig.Follow(playerCar)
+```
+
+The scene itself is generated by `ArenaSceneBuilder.BuildScene()`, so its construction is
+reviewable as code rather than opaque YAML. See [workflow.md](workflow.md).
+
+## Standing design decisions
+
+| Decision | Choice | Reason |
+|---|---|---|
+| Physics substrate | `Rigidbody` + `AddForce`, no `WheelCollider` | Wheel colliders simulate suspension and tyre slip we do not want, and fight turn-in-place |
+| Yaw | Direct angular velocity | Crisp arcade response; makes turn-in-place deliberate |
+| Drift | Constant lateral grip rate | One knob; drift magnitude scales with speed naturally |
+| Reverse | Brake, then reverse below a speed epsilon | Backing out of a wall pin matters in a brawler |
+| Arena edge | Solid wall | Contains play; gives ramming something to slam against |
+| Aim mapping | Locked cursor, accumulate delta, clamp | Decouples cone angle from camera FOV; identical in both camera modes |
+| Camera follow | Chassis heading | Satisfies the crosshair invariant; makes the cone limit visible |
+| Module wiring | MonoBehaviour adapters over pure cores | Inspector-tunable *and* unit-testable |
