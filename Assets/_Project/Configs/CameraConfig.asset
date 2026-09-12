@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a78c2f9332a6c744aa4475ef9ec38202, type: 3}
   m_Name: CameraConfig
   m_EditorClassIdentifier: MotorCombat.Cameras::MotorCombat.Cameras.CameraConfig
-  mode: 0
+  mode: 1
   thirdPersonDistance: 8
   thirdPersonHeight: 3.5
   thirdPersonPitch: 12
