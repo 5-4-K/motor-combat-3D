@@ -6,7 +6,8 @@
         "UnityEditor.TestRunner",
         "MotorCombat.Core",
         "MotorCombat.Aiming",
-        "MotorCombat.Driving"
+        "MotorCombat.Driving",
+        "MotorCombat.Arena"
     ],
     "includePlatforms": ["Editor"],
     "excludePlatforms": [],
