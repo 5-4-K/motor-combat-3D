@@ -6,13 +6,35 @@ namespace MotorCombat.Arena
     /// Generates the arena's geometry. A real circular mesh rather than a ring of
     /// box colliders, because a car slides along this wall constantly and box
     /// seams catch.
+    ///
+    /// UVs are baked in WORLD scale, not normalised 0..1. Normalised UVs stretch
+    /// a single texture across the whole 90m arena; worse, they make tiling a
+    /// property of the material, so every texture swapped in would need its scale
+    /// re-tuned by hand and re-tuned again on every radius change. Baked here,
+    /// any material dropped into ArenaConfig tiles correctly with no setup.
     /// </summary>
     public static class ArenaMeshBuilder
     {
-        /// <summary>Flat disc on the XZ plane at y = 0, normals up.</summary>
-        public static Mesh BuildDisc(float radius, int segments)
+        /// <summary>
+        /// How many times the texture repeats around the wall. Rounded to a whole
+        /// number so the seam at angle 0 is impossible by construction rather
+        /// than merely unlikely -- a fractional repeat leaves a visible jump.
+        /// </summary>
+        public static int WallRepeats(float radius, float tileSize)
+        {
+            if (tileSize <= 0f) return 1;
+            float circumference = 2f * Mathf.PI * radius;
+            return Mathf.Max(1, Mathf.RoundToInt(circumference / tileSize));
+        }
+
+        /// <summary>
+        /// Flat disc on the XZ plane at y = 0, normals up.
+        /// <paramref name="tileSize"/> is the world size of one texture repeat.
+        /// </summary>
+        public static Mesh BuildDisc(float radius, int segments, float tileSize)
         {
             segments = Mathf.Max(3, segments);
+            tileSize = Mathf.Max(1e-4f, tileSize);
 
             var vertices = new Vector3[segments + 1];
             var normals = new Vector3[segments + 1];
@@ -21,6 +43,9 @@ namespace MotorCombat.Arena
 
             vertices[0] = Vector3.zero;
             normals[0] = Vector3.up;
+
+            // Half-tile offset so the world origin -- where the player spawns --
+            // sits inside a cell rather than on a line crossing.
             uvs[0] = new Vector2(0.5f, 0.5f);
 
             for (int i = 0; i < segments; i++)
@@ -31,7 +56,9 @@ namespace MotorCombat.Arena
 
                 vertices[i + 1] = new Vector3(x * radius, 0f, z * radius);
                 normals[i + 1] = Vector3.up;
-                uvs[i + 1] = new Vector2((x + 1f) * 0.5f, (z + 1f) * 0.5f);
+                uvs[i + 1] = new Vector2(
+                    x * radius / tileSize + 0.5f,
+                    z * radius / tileSize + 0.5f);
 
                 int next = (i + 1) % segments;
                 triangles[i * 3 + 0] = 0;
@@ -52,9 +79,17 @@ namespace MotorCombat.Arena
         /// Open-ended cylinder wall, inward facing, from y = 0 to y = height.
         /// The seam column is duplicated so UVs do not wrap.
         /// </summary>
-        public static Mesh BuildRing(float radius, float height, int segments)
+        public static Mesh BuildRing(float radius, float height, int segments, float tileSize)
         {
             segments = Mathf.Max(3, segments);
+            tileSize = Mathf.Max(1e-4f, tileSize);
+
+            int repeats = WallRepeats(radius, tileSize);
+
+            // Vertical UVs keep tiles square rather than stretching one repeat to
+            // the wall's height. A short wall therefore shows a horizontal slice
+            // of the texture, which is what an undistorted material should do.
+            float vTop = height / tileSize;
 
             int columns = segments + 1;   // duplicate the seam column
             var vertices = new Vector3[columns * 2];
@@ -80,8 +115,8 @@ namespace MotorCombat.Arena
                 normals[bottom] = inward;
                 normals[top] = inward;
 
-                uvs[bottom] = new Vector2(t, 0f);
-                uvs[top] = new Vector2(t, 1f);
+                uvs[bottom] = new Vector2(t * repeats, 0f);
+                uvs[top] = new Vector2(t * repeats, vTop);
             }
 
             for (int i = 0; i < segments; i++)

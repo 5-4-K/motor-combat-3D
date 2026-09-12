@@ -6,10 +6,13 @@ namespace MotorCombat.Tests
 {
     public class ArenaMeshBuilderTests
     {
+        // One texture repeat spans 5 car lengths at the default 4.5m car.
+        const float Tile = 22.5f;
+
         [Test]
         public void Disc_HasCentreVertexPlusOnePerSegment()
         {
-            var mesh = ArenaMeshBuilder.BuildDisc(45f, 32);
+            var mesh = ArenaMeshBuilder.BuildDisc(45f, 32, Tile);
             Assert.AreEqual(33, mesh.vertexCount, "one centre vertex plus one per segment");
             Assert.AreEqual(32 * 3, mesh.triangles.Length, "one triangle per segment");
         }
@@ -17,7 +20,7 @@ namespace MotorCombat.Tests
         [Test]
         public void Disc_RimVerticesSitOnTheRadius()
         {
-            var mesh = ArenaMeshBuilder.BuildDisc(45f, 32);
+            var mesh = ArenaMeshBuilder.BuildDisc(45f, 32, Tile);
             var vertices = mesh.vertices;
 
             // vertex 0 is the centre; the rest are the rim
@@ -31,7 +34,7 @@ namespace MotorCombat.Tests
         [Test]
         public void Disc_IsFlatAtYZero()
         {
-            var mesh = ArenaMeshBuilder.BuildDisc(45f, 16);
+            var mesh = ArenaMeshBuilder.BuildDisc(45f, 16, Tile);
             foreach (var v in mesh.vertices)
             {
                 Assert.AreEqual(0f, v.y, 1e-5f);
@@ -41,7 +44,7 @@ namespace MotorCombat.Tests
         [Test]
         public void Ring_HasABottomAndTopVertexPerColumn()
         {
-            var mesh = ArenaMeshBuilder.BuildRing(45f, 2.5f, 32);
+            var mesh = ArenaMeshBuilder.BuildRing(45f, 2.5f, 32, Tile);
             Assert.AreEqual((32 + 1) * 2, mesh.vertexCount, "a bottom and top vertex per column, seam column duplicated");
             Assert.AreEqual(32 * 6, mesh.triangles.Length, "two triangles per segment");
         }
@@ -49,7 +52,7 @@ namespace MotorCombat.Tests
         [Test]
         public void Ring_SpansFromGroundToWallHeight()
         {
-            var mesh = ArenaMeshBuilder.BuildRing(45f, 2.5f, 32);
+            var mesh = ArenaMeshBuilder.BuildRing(45f, 2.5f, 32, Tile);
             float minY = float.MaxValue, maxY = float.MinValue;
 
             foreach (var v in mesh.vertices)
@@ -65,7 +68,7 @@ namespace MotorCombat.Tests
         [Test]
         public void Ring_VerticesSitOnTheRadius()
         {
-            var mesh = ArenaMeshBuilder.BuildRing(45f, 2.5f, 24);
+            var mesh = ArenaMeshBuilder.BuildRing(45f, 2.5f, 24, Tile);
             foreach (var v in mesh.vertices)
             {
                 float distance = new Vector2(v.x, v.z).magnitude;
@@ -83,7 +86,7 @@ namespace MotorCombat.Tests
         [Test]
         public void Ring_TrianglesFaceInward()
         {
-            var mesh = ArenaMeshBuilder.BuildRing(45f, 2.5f, 24);
+            var mesh = ArenaMeshBuilder.BuildRing(45f, 2.5f, 24, Tile);
             var vertices = mesh.vertices;
             var triangles = mesh.triangles;
 
@@ -104,7 +107,7 @@ namespace MotorCombat.Tests
         [Test]
         public void Disc_TrianglesFaceUp()
         {
-            var mesh = ArenaMeshBuilder.BuildDisc(45f, 24);
+            var mesh = ArenaMeshBuilder.BuildDisc(45f, 24, Tile);
             var vertices = mesh.vertices;
             var triangles = mesh.triangles;
 
@@ -119,6 +122,81 @@ namespace MotorCombat.Tests
                 Assert.Greater(Vector3.Dot(faceNormal, Vector3.up), 0f,
                     $"triangle at index {i} faces downward");
             }
+        }
+
+        // --- UVs --------------------------------------------------------------
+
+        /// <summary>
+        /// UVs are world-scaled, not normalised. A rim vertex 45m out with a
+        /// 22.5m repeat must land two repeats from the centre, not at uv 1.
+        /// </summary>
+        [Test]
+        public void Disc_UvsAreWorldScaledNotNormalised()
+        {
+            var mesh = ArenaMeshBuilder.BuildDisc(45f, 32, Tile);
+            var uvs = mesh.uv;
+
+            Assert.AreEqual(0.5f, uvs[0].x, 1e-4f, "centre carries the half-tile offset");
+            Assert.AreEqual(0.5f, uvs[0].y, 1e-4f, "centre carries the half-tile offset");
+
+            // Vertex 1 sits at angle 0, i.e. (+45, 0, 0).
+            Assert.AreEqual(45f / Tile + 0.5f, uvs[1].x, 1e-4f);
+            Assert.AreEqual(0.5f, uvs[1].y, 1e-4f);
+        }
+
+        [Test]
+        public void Disc_UvSpanIsOneRepeatPerTileOfDiameter()
+        {
+            var mesh = ArenaMeshBuilder.BuildDisc(45f, 64, Tile);
+
+            float min = float.MaxValue, max = float.MinValue;
+            foreach (var uv in mesh.uv)
+            {
+                min = Mathf.Min(min, uv.x);
+                max = Mathf.Max(max, uv.x);
+            }
+
+            // 90m of diameter over a 22.5m repeat is four repeats across.
+            Assert.AreEqual(4f, max - min, 1e-3f);
+        }
+
+        /// <summary>
+        /// The property that kills the wall seam: a fractional repeat count
+        /// leaves the texture cut mid-tile at angle 0, visible once per lap.
+        /// </summary>
+        [Test]
+        public void Ring_RepeatsAWholeNumberOfTimesAroundTheCircle()
+        {
+            var mesh = ArenaMeshBuilder.BuildRing(45f, 2.5f, 96, Tile);
+            var uvs = mesh.uv;
+
+            // Last bottom vertex minus first bottom vertex: the full lap.
+            float span = uvs[uvs.Length - 2].x - uvs[0].x;
+
+            Assert.Greater(span, 0f);
+            Assert.AreEqual(Mathf.Round(span), span, 1e-4f, "u must close on a whole repeat");
+        }
+
+        [Test]
+        public void Ring_RepeatCountIsTheRoundedCircumference()
+        {
+            // 2*pi*45 = 282.7m over a 22.5m repeat rounds to 13.
+            Assert.AreEqual(13, ArenaMeshBuilder.WallRepeats(45f, Tile));
+            Assert.AreEqual(1, ArenaMeshBuilder.WallRepeats(45f, 100000f), "never drops below one repeat");
+        }
+
+        /// <summary>
+        /// Vertical UVs must keep tiles square. Stretching one repeat to the
+        /// wall height would squash any real texture by the height-to-tile ratio.
+        /// </summary>
+        [Test]
+        public void Ring_VerticalUvsKeepTilesSquare()
+        {
+            var mesh = ArenaMeshBuilder.BuildRing(45f, 2.5f, 32, Tile);
+            var uvs = mesh.uv;
+
+            Assert.AreEqual(0f, uvs[0].y, 1e-4f, "bottom row sits at v = 0");
+            Assert.AreEqual(2.5f / Tile, uvs[1].y, 1e-4f, "top row is height/tileSize, not 1");
         }
     }
 }
