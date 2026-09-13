@@ -6,6 +6,7 @@ using MotorCombat.Aiming;
 using MotorCombat.Arena;
 using MotorCombat.Cameras;
 using MotorCombat.Cars;
+using MotorCombat.Ramming;
 
 namespace MotorCombat.EditorTools
 {
@@ -27,10 +28,12 @@ namespace MotorCombat.EditorTools
             var aim = GetOrCreate<AimConfig>("AimConfig");
             GetOrCreate<ArenaConfig>("ArenaConfig");
             GetOrCreate<CameraConfig>("CameraConfig");
+            var ram = GetOrCreate<RamConfig>("RamConfig");
 
             var car = GetOrCreate<CarDefinition>("CarDefinition");
             if (car.driveConfig == null) car.driveConfig = drive;
             if (car.aimConfig == null) car.aimConfig = aim;
+            if (car.ramConfig == null) car.ramConfig = ram;
             EditorUtility.SetDirty(car);
 
             AssetDatabase.SaveAssets();

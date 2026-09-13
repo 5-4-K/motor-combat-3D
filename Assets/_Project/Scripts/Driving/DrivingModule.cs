@@ -37,12 +37,18 @@ namespace MotorCombat.Driving
 
             Rigidbody body = _car.Body;
             Vector3 forward = FlatForward();
+            CarStatus status = _car.Status;
+
+            // Locked or reeling: throttle and steer are ignored. Aim is untouched —
+            // it runs in AimModule on the frame tick.
+            float throttle = status.CanDrive ? input.throttle : 0f;
+            float steer = status.CanDrive ? input.steer : 0f;
 
             // 1. Thrust, brake and reverse.
             Vector3 force = DrivePhysics.DriveForce(
                 forward,
                 body.linearVelocity,
-                input.throttle,
+                throttle,
                 config.enginePower,
                 config.brakeForce,
                 config.reversePower,
@@ -56,12 +62,16 @@ namespace MotorCombat.Driving
             // 2. Drag, applied manually so terminal speed matches the formula.
             body.linearVelocity = DrivePhysics.ApplyDrag(body.linearVelocity, config.linearDrag, dt);
 
+            // A reeling car slides and spins freely: no yaw write (the ram's spin
+            // survives and decays in RammingModule) and no grip (the shove survives).
+            if (status.IsReeling) return;
+
             // 3. Yaw, set directly. Never gated on speed MAGNITUDE, so turning on
             //    the spot works; the SIGN of travel can invert the steering sense
             //    so reversing handles like a real car.
             float forwardSpeed = Vector3.Dot(body.linearVelocity, forward);
             float yawRate = DrivePhysics.YawRate(
-                input.steer,
+                steer,
                 config.turnRate,
                 forwardSpeed,
                 config.flipSteeringInReverse,

@@ -1,6 +1,7 @@
 using UnityEngine;
 using MotorCombat.Driving;
 using MotorCombat.Aiming;
+using MotorCombat.Ramming;
 
 namespace MotorCombat.Cars
 {
@@ -39,8 +40,17 @@ namespace MotorCombat.Cars
                  "modified and the two cars can differ.")]
         public Material[] tintedMaterials;
 
+        [Header("Ramming")]
+        [Tooltip("Multiplies the shove this car deals when it rams. Balanced against the victim's defense as a ratio.")]
+        public float attack = 1f;
+
+        [Tooltip("Divides the shove this car receives when rammed. Must be above zero.")]
+        [Min(0.01f)]
+        public float defense = 1f;
+
         [Header("Behaviour")]
         public DriveConfig driveConfig;
         public AimConfig aimConfig;
+        public RamConfig ramConfig;
     }
 }

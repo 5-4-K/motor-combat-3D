@@ -4,6 +4,7 @@ using MotorCombat.Core;
 using MotorCombat.Cars;
 using MotorCombat.Driving;
 using MotorCombat.Aiming;
+using MotorCombat.Ramming;
 
 namespace MotorCombat.Tests
 {
@@ -29,6 +30,9 @@ namespace MotorCombat.Tests
             _definition.driverAnchorOffset = new Vector3(0f, 1f, 0.4f);
             _definition.driveConfig = ScriptableObject.CreateInstance<DriveConfig>();
             _definition.aimConfig = ScriptableObject.CreateInstance<AimConfig>();
+            _definition.ramConfig = ScriptableObject.CreateInstance<RamConfig>();
+            _definition.attack = 2f;
+            _definition.defense = 3f;
 
             _car = CarFactory.Spawn(
                 _definition, Vector3.zero, Quaternion.identity, null, Color.white);
@@ -42,6 +46,7 @@ namespace MotorCombat.Tests
             if (_model != null) Object.DestroyImmediate(_model);
             Object.DestroyImmediate(_definition.driveConfig);
             Object.DestroyImmediate(_definition.aimConfig);
+            Object.DestroyImmediate(_definition.ramConfig);
             Object.DestroyImmediate(_definition);
         }
 
@@ -130,6 +135,15 @@ namespace MotorCombat.Tests
         {
             Assert.AreSame(_definition.driveConfig, _car.GetComponent<DrivingModule>().config);
             Assert.AreSame(_definition.aimConfig, _car.GetComponent<AimModule>().config);
+        }
+
+        [Test]
+        public void Spawn_WiresRamConfigAndStatsFromTheDefinition()
+        {
+            var ramming = _car.GetComponent<RammingModule>();
+            Assert.AreSame(_definition.ramConfig, ramming.config);
+            Assert.AreEqual(2f, ramming.attack);
+            Assert.AreEqual(3f, ramming.defense);
         }
 
         // --- Visual: placeholder box ------------------------------------------

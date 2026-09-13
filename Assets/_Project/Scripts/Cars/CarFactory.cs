@@ -63,7 +63,10 @@ namespace MotorCombat.Cars
 
             car.AddComponent<DrivingModule>().config = definition.driveConfig;
             car.AddComponent<AimModule>().config = definition.aimConfig;
-            car.AddComponent<RammingModule>();
+            var ramming = car.AddComponent<RammingModule>();
+            ramming.config = definition.ramConfig;
+            ramming.attack = definition.attack;
+            ramming.defense = definition.defense;
             car.AddComponent<WeaponModule>();
 
             controller.Bind(provider);
