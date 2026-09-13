@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c146ed20738b3f04fa5bb29e348f87c1, type: 3}
+  m_Name: RamConfig
+  m_EditorClassIdentifier: MotorCombat.Ramming::MotorCombat.Ramming.RamConfig
+  headOnScale: 0.2
+  flankScale: 1.5
+  rearScale: 1.2
+  attackerLockSeconds: 0.5
+  reelSeconds: 1
+  minRamSpeed: 3
+  headOnAngleDegrees: 45
+  cornerBandMetres: 0.3
+  spinScale: 1
+  spinDecayRate: 2

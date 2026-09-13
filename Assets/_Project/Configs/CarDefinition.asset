@@ -23,5 +23,8 @@ MonoBehaviour:
   tintedMaterials:
   - {fileID: 2100000, guid: 7a174332889895049a898ea93eb0bb6d, type: 2}
   - {fileID: 2100000, guid: 84de3e0389299b24192fd4c1b229454e, type: 2}
+  attack: 1
+  defense: 1
   driveConfig: {fileID: 11400000, guid: d9dceb404c57dbd4dbc9ed6d4496fdfc, type: 2}
   aimConfig: {fileID: 11400000, guid: 7d5dd7ecfe1526d4f922c4a7893f0901, type: 2}
+  ramConfig: {fileID: 11400000, guid: 13101bd00fdea9f4d9f39bab4394b845, type: 2}

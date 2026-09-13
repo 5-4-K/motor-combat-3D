@@ -11,8 +11,10 @@ CarController ── owns the Rigidbody and aimYaw, ticks its ICarModules
         │
         ├── AimModule      (Update)       aimYaw += delta × sens, clamped to ±cone/2
         ├── DrivingModule  (FixedUpdate)  thrust │ brake/reverse │ yaw │ grip
-        ├── RammingModule  (collision)    OnCollisionEnter → CarCollisionEvent   [stub]
+        ├── RammingModule  (collision)    region + angle → shove victim, stop attacker; spin decay while reeling
         └── WeaponModule   (—)            reads CarController.AimDirection       [stub]
+
+CarStatus (Core) ← lock / reel timers; written by Ramming, read by Driving
 
 CameraRig    (LateUpdate) ← car transform + CameraMode
 CrosshairHUD (LateUpdate) ← CarController.AimDirection, projected through the camera
@@ -47,7 +49,7 @@ editing that file. Tuning is data; composition is not, yet.
 
 Each module is a MonoBehaviour that reads config, calls a static pure function, and writes
 the result to the Rigidbody. The maths lives in `DrivePhysics` and `AimMath` — no
-`GameObject`, no scene, testable directly. This is why 59 EditMode tests run in under a
+`GameObject`, no scene, testable directly. This is why 116 EditMode tests run in under a
 second with nothing instantiated.
 
 When adding a module, put the decision in a pure static and keep the MonoBehaviour dumb.
@@ -104,14 +106,15 @@ motion rather than physics-step judder.
 None of them require the driving code to know the difference. Networking is not
 implemented; only this seam exists.
 
-## Ramming and Weapons are seams, not features
+## Weapons is a seam, not a feature
 
-Both ship as real files with real interfaces and no behaviour. `RammingModule` catches
-collisions and raises a `CarCollisionEvent` carrying impact normal, relative velocity and
-the other car, then does nothing with it. `WeaponModule` exposes a fire entry point that
-no-ops.
+`WeaponModule` ships as a real file with a real interface and no behaviour: it exposes a
+fire entry point, reading `CarController.AimDirection`, that no-ops. It exists so
+implementing weapons means filling in a body rather than re-architecting.
 
-They exist so implementing combat means filling in a body rather than re-architecting.
+Ramming was the other seam; it is now built — see [ramming.md](ramming.md). It reaches
+driving only through `CarController.Status`, so the two assemblies still never reference
+each other.
 
 ## Scene composition
 

@@ -13,6 +13,9 @@ Arcade, not simulation. All the maths is in `DrivePhysics` as pure statics;
 5. **Grip** — decompose velocity into the car's forward and right axes and decay the right
    component. The gap between where the nose points and where velocity points is the drift.
 
+While the car is **locked or reeling**, throttle and steer read as zero. While **reeling**,
+yaw and grip are skipped — see [ramming.md](ramming.md#locked-and-reeling).
+
 The order matters: drag before yaw means the yaw block reads the post-drag speed when
 deciding steering sense, and grip last means whatever sideways velocity survives is what
 you see as drift.
@@ -103,10 +106,9 @@ collision never leaks into steering or grip.
 
 ## Known behaviour that looks like a bug
 
-**Side-on rams barely move the dummy, and it never spins.** `DrivingModule` assigns
-`angularVelocity` every tick — a hard zero for the dummy's null input — and `ApplyGrip`
-bleeds lateral velocity. Both are correct for the arcade model chosen. It resolves when
-combat lands, via a carve-out in the yaw write.
+**Plain bumps barely move a car and never spin it.** A contact that is not a ram (below
+minRamSpeed, or not front-first) gets only PhysX's response, and DrivingModule's yaw write
+and grip absorb it. Rams bypass both — see [ramming.md](ramming.md).
 
 ## Tests
 

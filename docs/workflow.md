@@ -47,25 +47,27 @@ is rejected with *"conflicts with a reserved Unity flag managed by this command.
 
 ## Tests
 
-72 EditMode tests, sub-second. Nearly all test pure statics; `CarFactoryTests` builds throwaway GameObjects but loads no scene.
+116 EditMode tests, sub-second. Nearly all test pure statics; `CarFactoryTests` builds throwaway GameObjects but loads no scene.
 
 | Fixture | Count |
 |---|---|
 | `DrivePhysicsTests` | 16 |
 | `ArenaMeshBuilderTests` | 15 |
 | `ArenaTextureBuilderTests` | 9 |
-| `CarFactoryTests` | 15 |
+| `CarFactoryTests` | 16 |
 | `AimMathTests` | 6 |
 | `CameraFovTests` | 5 |
 | `ArenaBuilderTests` | 6 |
+| `RamRulesTests` | 36 |
+| `CarStatusTests` | 7 |
 
 The test assembly carries the `UNITY_INCLUDE_TESTS` define constraint, so tests never ship
 in a player build.
 
 ## Acceptance checklist
 
-Behaviour that cannot be unit-tested. All twelve currently pass. Re-walk them after any
-change to driving, aiming or the camera.
+Behaviour that cannot be unit-tested. Rows 1–12 passed before ramming; rows 13–20 are new
+and not yet walked.
 
 | # | Check | Expected |
 |---|---|---|
@@ -79,8 +81,16 @@ change to driving, aiming or the camera.
 | 8 | Mouse left | Crosshair moves left, stops at the cone edge |
 | 9 | **Steer, mouse held still** | **Crosshair does NOT move on screen** |
 | 10 | Drive into the wall | Stopped, slides along without catching |
-| 11 | Drive into the dummy car | Dummy is shoved, no damage |
+| 11 | Drive slowly (under 3 m/s) into the dummy | Plain bump, no ram |
 | 12 | `CameraConfig.mode` → `FirstPerson` | View from inside; all the above still holds |
+| 13 | Drive into the parked dummy's rear at speed | Rear ram: you stop dead; dummy shoots forward and slides |
+| 14 | Hit the dummy's side mid-panel | Flank: dummy slides sideways, little or no spin |
+| 15 | Hit the dummy's side near its tail | Flank with spin; spin winds down, then it settles |
+| 16 | Drive into the dummy's nose, head-on | Both nudged apart, no spin, you are locked ~0.5 s. A violent bounce here is PhysX depenetration — see ramming.md |
+| 17 | After any ram, press W and A/D immediately | No response for ~0.5 s; mouse aim still moves the crosshair |
+| 18 | Hit the dummy's front corner at a shallow vs steep angle | Shallow (< 45°) is head-on; steep is flank |
+| 19 | Ram the dummy again while it is still sliding | Second ram applies; its reel restarts |
+| 20 | Any ram at top speed | No car leaves the ground or tips |
 
 Row 9 is the one that matters. It is the reason the aiming and camera are built the way they
 are, and the hardest to judge by eye — pick a floor grid line and watch the crosshair

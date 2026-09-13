@@ -10,6 +10,7 @@ one drivable car, one dummy to ram. No combat, no menus, no netcode.
 | [docs/architecture.md](docs/architecture.md) | Adding a module, touching `CarController`, or wondering why the folders are split the way they are |
 | [docs/driving-physics.md](docs/driving-physics.md) | Anything about how the car moves |
 | [docs/aiming-and-camera.md](docs/aiming-and-camera.md) | Anything about the crosshair or the camera — they are one subject |
+| [docs/ramming.md](docs/ramming.md) | Anything about car-vs-car collisions, lock or reel |
 | [docs/arena-and-rendering.md](docs/arena-and-rendering.md) | Arena geometry, textures, materials, or a URP problem |
 | [docs/tuning.md](docs/tuning.md) | Changing a number, or replacing the box with a real car model |
 | [docs/workflow.md](docs/workflow.md) | Running it, testing it, the acceptance checklist, git |
@@ -69,7 +70,7 @@ user.
 
 ## Not built yet
 
-Combat, damage, health, respawn. Menus, lobby, practice mode, car select. Netcode — only the
+Weapons, damage, health, respawn. Menus, lobby, practice mode, car select. Netcode — only the
 `IInputProvider` seam exists. Audio. The car is one model (Bastion); there is no car select.
 
-`RammingModule` and `WeaponModule` are deliberate empty seams, not oversights.
+`WeaponModule` is a deliberate empty seam, not an oversight.

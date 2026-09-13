@@ -54,6 +54,21 @@ See [aiming-and-camera.md](aiming-and-camera.md#every-monitor-sees-the-same-widt
 Yaw is rigid to the chassis in both modes and must stay that way — see
 [aiming-and-camera.md](aiming-and-camera.md#camera-yaw-is-rigid-to-the-chassis-and-must-never-be-smoothed).
 
+## RamConfig
+
+| Field | Default | Notes |
+|---|---|---|
+| `headOnScale` | 0.2 × | Head-on shove multiplier. Keep small: head-ons stop both cars and should not reward either |
+| `flankScale` | 1.5 × | Flank (side) shove multiplier |
+| `rearScale` | 1.2 × | Rear shove multiplier |
+| `attackerLockSeconds` | 0.5 s | How long the attacker (and both cars in a head-on) ignore throttle and steer |
+| `reelSeconds` | 1 s | How long a flank or rear victim reels: no throttle, steer or grip; spins freely |
+| `minRamSpeed` | 3 m/s | Minimum attacker forward speed. Slower front contacts are plain physics bumps |
+| `headOnAngleDegrees` | 45° | Headings within this many degrees of opposite (front hit) are head-on, and of parallel (rear hit) are rear. Otherwise flank |
+| `cornerBandMetres` | 0.3 m | Width of the corner band where a front or rear face meets a side |
+| `spinScale` | 1 × | Multiplies the yaw a real impulse at the contact point would give. 1 = physical |
+| `spinDecayRate` | 2 /s | Rate at which a reeling car's spin decays, as `exp(-rate × dt)` |
+
 ## ArenaConfig
 
 | Field | Default | Notes |
@@ -78,7 +93,9 @@ Yaw is rigid to the chassis in both modes and must stay that way — see
 | `visualOffset` | (0, −0.667, −0.245) | Centres the model on the collider; the model's origin is at its wheels |
 | `visualYawOffset` | −90° | The model is authored nose-along-+X; Unity's forward is +Z |
 | `tintedMaterials` | Body, Door | Which materials take the team colour. Empty tints every renderer |
-| `driveConfig` / `aimConfig` | references | |
+| `attack` | 1 | Multiplies shove dealt |
+| `defense` | 1 | Divides shove received; must be > 0 |
+| `driveConfig` / `aimConfig` / `ramConfig` | references | |
 
 Changing `length` no longer resizes the arena — that coupling was removed deliberately.
 
