@@ -23,6 +23,19 @@ namespace MotorCombat.Core
         /// <summary>World-space direction the weapons point.</summary>
         public Vector3 AimDirection => Quaternion.AngleAxis(AimYaw, Vector3.up) * transform.forward;
 
+        /// <summary>Lock and reel timers. Written by ramming, obeyed by driving.</summary>
+        public CarStatus Status { get; } = new CarStatus();
+
+        /// <summary>
+        /// Velocity going INTO the last physics step, recorded after every module
+        /// ticked. Collision callbacks run after the step, by which time PhysX has
+        /// already applied its own response — this is the pre-contact value.
+        /// </summary>
+        public Vector3 PreStepVelocity { get; private set; }
+
+        /// <summary>Angular counterpart of <see cref="PreStepVelocity"/>.</summary>
+        public Vector3 PreStepAngularVelocity { get; private set; }
+
         IInputProvider _input;
         readonly List<ICarModule> _modules = new List<ICarModule>();
 
@@ -77,10 +90,19 @@ namespace MotorCombat.Core
             // Reuses the cached struct; only the level fields (throttle, steer)
             // are meaningful here.
             float dt = Time.fixedDeltaTime;
+
+            Status.Advance(dt);
+
             for (int i = 0; i < _modules.Count; i++)
             {
                 _modules[i].Tick(in _current, dt);
             }
+
+            // Last, so it reflects every module's writes. Forces added with
+            // AddForce this step are integrated inside the physics step and are
+            // absent here — at most enginePower / mass × dt, about 0.5 m/s.
+            PreStepVelocity = Body.linearVelocity;
+            PreStepAngularVelocity = Body.angularVelocity;
         }
     }
 }
