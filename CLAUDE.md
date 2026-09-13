@@ -1,7 +1,7 @@
 # motor-combat-3D
 
 3D car brawl game. Unity 6 (`6000.6.0f1`), URP. Currently a playable skeleton: one arena,
-one drivable car, one dummy to ram. No combat, no menus, no netcode.
+one drivable car, one dummy to ram. Ramming works; no weapons, no menus, no netcode.
 
 ## Documentation
 
