@@ -9,7 +9,8 @@
         "MotorCombat.Driving",
         "MotorCombat.Arena",
         "MotorCombat.Cars",
-        "MotorCombat.Cameras"
+        "MotorCombat.Cameras",
+        "MotorCombat.Ramming"
     ],
     "includePlatforms": ["Editor"],
     "excludePlatforms": [],
