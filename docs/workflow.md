@@ -81,14 +81,14 @@ and not yet walked.
 | 8 | Mouse left | Crosshair moves left, stops at the cone edge |
 | 9 | **Steer, mouse held still** | **Crosshair does NOT move on screen** |
 | 10 | Drive into the wall | Stopped, slides along without catching |
-| 11 | Drive slowly (under 3 m/s) into the dummy | Plain bump, no ram |
+| 11 | Tap W from about a metre away from the dummy (under 3 m/s at contact) | Plain bump, no ram; with logImpacts on, the log says (no ram) |
 | 12 | `CameraConfig.mode` → `FirstPerson` | View from inside; all the above still holds |
 | 13 | Drive into the parked dummy's rear at speed | Rear ram: you stop dead; dummy shoots forward and slides |
 | 14 | Hit the dummy's side mid-panel | Flank: dummy slides sideways, little or no spin |
-| 15 | Hit the dummy's side near its tail | Flank with spin; spin winds down, then it settles |
-| 16 | Drive into the dummy's nose, head-on | Both nudged apart, no spin, you are locked ~0.5 s. A violent bounce here is PhysX depenetration — see ramming.md |
+| 15 | Hit the dummy's side near its tail | Flank with spin; spin winds down, then any remaining spin stops abruptly when the reel ends — known, see ramming.md |
+| 16 | Drive into the parked dummy's nose, head-on | You stop dead and are locked ~0.5 s; the dummy is pushed backwards at about a fifth of your speed, no spin. Your own car must not move backwards — if it does, that is PhysX depenetration (see ramming.md) |
 | 17 | After any ram, press W and A/D immediately | No response for ~0.5 s; mouse aim still moves the crosshair |
-| 18 | Hit the dummy's front corner at a shallow vs steep angle | Shallow (< 45°) is head-on; steep is flank |
+| 18 | Hit the dummy's front corner at a shallow vs steep angle | Nearly nose-to-nose (headings within 45° of opposite) is head-on; more than 45° off is flank |
 | 19 | Ram the dummy again while it is still sliding | Second ram applies; its reel restarts |
 | 20 | Any ram at top speed | No car leaves the ground or tips |
 

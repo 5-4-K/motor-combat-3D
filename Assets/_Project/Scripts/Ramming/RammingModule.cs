@@ -25,13 +25,13 @@ namespace MotorCombat.Ramming
         [Tooltip("Set from CarDefinition by CarFactory.")]
         public float defense = 1f;
 
-        [Tooltip("Log impacts and rams to the console. Useful while tuning.")]
+        [Tooltip("Logs resolved rams and car-vs-car bumps to the console (walls are never logged). Ticking this on either car of a pair is enough — the log fires once per contact either way.")]
         public bool logImpacts;
 
         /// <summary>Every impact, including walls and plain bumps.</summary>
         public event Action<CarCollisionEvent> Collided;
 
-        /// <summary>Resolved rams only.</summary>
+        /// <summary>Resolved rams only. Raised on both cars' modules, attacker and victim alike.</summary>
         public event Action<RamReport> Rammed;
 
         CarController _car;
@@ -100,14 +100,20 @@ namespace MotorCombat.Ramming
             switch (outcome.type)
             {
                 case RamType.None:
-                    if (logImpacts) Debug.Log($"[Ram] {name} bumped {other.name} (no ram)");
+                    // Either car's logImpacts is enough — which callback ran
+                    // first is a PhysX ordering detail, not something the user
+                    // should have to guess to see the log.
+                    if (logImpacts || partner.logImpacts)
+                    {
+                        Debug.Log($"[Ram] {name} ({self.region}, {self.forwardSpeed:F1} m/s) bumped {other.name} ({them.region}, {them.forwardSpeed:F1} m/s) (no ram)");
+                    }
                     break;
                 case RamType.HeadOn:
                     ApplyHeadOn(partner, self, them);
                     break;
                 default:
-                    if (outcome.attacker == 0) ApplyRam(this, partner, self, contact, outcome.type);
-                    else ApplyRam(partner, this, them, contact, outcome.type);
+                    if (outcome.attacker == 0) ApplyRam(this, partner, self, them, contact, outcome.type);
+                    else ApplyRam(partner, this, them, self, contact, outcome.type);
                     break;
             }
         }
@@ -143,7 +149,7 @@ namespace MotorCombat.Ramming
             };
         }
 
-        void ApplyRam(RammingModule attacker, RammingModule victim, in RamParticipant attackerSide, Vector3 contact, RamType type)
+        void ApplyRam(RammingModule attacker, RammingModule victim, in RamParticipant attackerSide, in RamParticipant victimSide, Vector3 contact, RamType type)
         {
             float scale = RamRules.ScaleFor(type, config.headOnScale, config.flankScale, config.rearScale);
             Vector3 shove = RamRules.ShoveDelta(attackerSide.flatForward, attacker.attack, victim.defense, attackerSide.forwardSpeed, scale);
@@ -156,7 +162,7 @@ namespace MotorCombat.Ramming
             victim.SetHorizontalVelocity(preVelocity + shove, victim.Car.PreStepAngularVelocity.y + spin);
             victim.Car.Status.Reel(config.reelSeconds);
 
-            Report(type, attacker, victim, shove.magnitude, spin);
+            Report(type, attacker, victim, attackerSide, victimSide, shove.magnitude, spin);
         }
 
         void ApplyHeadOn(RammingModule partner, in RamParticipant self, in RamParticipant them)
@@ -172,7 +178,7 @@ namespace MotorCombat.Ramming
             Car.Status.Lock(config.attackerLockSeconds);
             partner.Car.Status.Lock(config.attackerLockSeconds);
 
-            Report(RamType.HeadOn, this, partner, toPartner.magnitude, 0f);
+            Report(RamType.HeadOn, this, partner, self, them, toPartner.magnitude, 0f);
         }
 
         /// <summary>Writes horizontal velocity and yaw rate; keeps vertical velocity.</summary>
@@ -183,21 +189,30 @@ namespace MotorCombat.Ramming
             body.angularVelocity = Vector3.up * yawRate;
         }
 
-        void Report(RamType type, RammingModule attacker, RammingModule victim, float shoveSpeed, float spin)
+        /// <summary>
+        /// Logs and raises the ram. Which module's OnCollisionEnter happened to
+        /// resolve the pair is a PhysX ordering detail, not a fact the user or a
+        /// subscriber should have to know — so this checks logImpacts on BOTH
+        /// cars (logs once either way) and raises Rammed on BOTH modules.
+        /// </summary>
+        static void Report(RamType type, RammingModule attacker, RammingModule victim, in RamParticipant attackerSide, in RamParticipant victimSide, float shoveSpeed, float spin)
         {
-            if (logImpacts)
+            if (attacker.logImpacts || victim.logImpacts)
             {
-                Debug.Log($"[Ram] {type}: {attacker.name} → {victim.name}, shove {shoveSpeed:F1} m/s, spin {spin:F2} rad/s");
+                Debug.Log($"[Ram] {type}: {attacker.name} ({attackerSide.region}, {attackerSide.forwardSpeed:F1} m/s) → {victim.name} ({victimSide.region}, {victimSide.forwardSpeed:F1} m/s), shove {shoveSpeed:F1} m/s, spin {spin:F2} rad/s");
             }
 
-            Rammed?.Invoke(new RamReport
+            var report = new RamReport
             {
                 type = type,
                 attacker = attacker.Car,
                 victim = victim.Car,
                 shoveSpeed = shoveSpeed,
                 spin = spin
-            });
+            };
+
+            attacker.Rammed?.Invoke(report);
+            victim.Rammed?.Invoke(report);
         }
 
         /// <summary>

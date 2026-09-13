@@ -69,6 +69,11 @@ Yaw is rigid to the chassis in both modes and must stay that way — see
 | `spinScale` | 1 × | Multiplies the yaw a real impulse at the contact point would give. 1 = physical |
 | `spinDecayRate` | 2 /s | Rate at which a reeling car's spin decays, as `exp(-rate × dt)` |
 
+Unity's `m_DefaultMaxAngularSpeed` (`ProjectSettings/DynamicsManager.asset`, 50 rad/s by
+default) silently caps `Rigidbody.angularVelocity` — with the placeholders above, spin peaks
+around 39 rad/s at a car's 25 m/s top speed, so raising `attack`, `flankScale` or `spinScale`
+enough can clip the spin a ram would otherwise deal.
+
 ## ArenaConfig
 
 | Field | Default | Notes |

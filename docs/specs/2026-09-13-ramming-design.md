@@ -220,12 +220,17 @@ only when **both** modules have a `config`; otherwise the contact is plain physi
 `OnDrawGizmosSelected` draws the five regions on the collider footprint.
 
 **Known risk — depenetration.** Discrete collision detection lets fast cars overlap before
-`OnCollisionEnter` (up to closing speed × fixed dt, ≈ 1 m in a 50 m/s head-on). On the next
-step PhysX separates overlapping bodies at up to `Rigidbody.maxDepenetrationVelocity`
-(default 10 m/s), which can look like an opposing bounce after we zero velocities —
-most visible in head-ons. Not pre-emptively fixed; if play shows it, candidates are
-lowering `maxDepenetrationVelocity` on cars or `ContinuousSpeculative` detection. Decide with
-the user.
+`OnCollisionEnter` (up to closing speed × fixed dt — 0.5 m at a single car's 25 m/s top
+speed with the project's 0.02 s fixed timestep, already more than `cornerBandMetres` at
+0.3 m). On the next step PhysX separates overlapping bodies at up to
+`Rigidbody.maxDepenetrationVelocity` (default 10 m/s), which can look like an opposing
+bounce after we zero velocities — most visible in head-ons. The same overlap can also put
+the contact point well inside the attacker's own box, so `RamRules.Region` misreads an
+offset attack as `Side` instead of `FrontCorner` — the attacker then fails to qualify and a
+real ram silently becomes a plain bump (the victim's region/angle test is unaffected). Not
+pre-emptively fixed; if play shows it, candidates are lowering `maxDepenetrationVelocity` on
+cars, `ContinuousSpeculative` detection, or classifying the attacker's region from the
+local-space contact normal instead of the contact point. Decide with the user.
 
 ### 2.7 Wiring
 
@@ -249,9 +254,11 @@ EditMode, pure statics.
 - `CarFactoryTests`: RammingModule receives config, attack, defense.
 
 Play checklist additions (docs/workflow.md): rear ram on the parked dummy; flank ram
-(dummy spins, slides, recovers); head-on into the dummy's nose (both nudged apart, no spin);
-corner hit at shallow vs steep angle; low-speed touch is a plain bump; attacker lock ~0.5 s
-with aim still live; re-ram during reel restarts it; no car ever leaves the ground.
+(dummy spins, slides, recovers); head-on into the parked dummy's nose (you stop dead and are
+locked ~0.5 s; the dummy, having contributed no forward speed, is pushed backwards at
+`headOnScale` × your speed, no spin); corner hit at shallow vs steep angle; low-speed touch is
+a plain bump; attacker lock ~0.5 s with aim still live; re-ram during reel restarts it; no car
+ever leaves the ground.
 
 ## 4. Documentation
 

@@ -3,7 +3,11 @@
 Only **car-vs-car** contacts can be rams; walls and the ground stay plain physics. When a
 ram resolves, the attacker stops dead and is briefly locked out of input; the victim is
 shoved away and reels, sliding and spinning until it recovers. A head-on is the exception —
-it stops both cars instead of picking a winner.
+there is no single attacker or victim. Both cars' velocities are zeroed, and then **each**
+receives a small shove computed from the **other** car's attack, forward speed and heading
+(and its own defense), scaled by `headOnScale`. A parked car contributes zero forward speed,
+so it gives no shove at all — the moving car simply stops, and only the parked car is pushed.
+See [The shove](#the-shove) for the exact head-on mapping.
 
 ## Regions are faces, not volumes
 
@@ -64,6 +68,25 @@ where `typeScale` is `headOnScale`, `flankScale` or `rearScale`, and `forwardSpe
 a misconfigured zero cannot divide by zero. `shoveDv.y` is always 0 — a ram never adds
 vertical velocity.
 
+**Head-on input mapping.** There is no single attacker, so the general formula above is
+applied twice with the roles swapped and `typeScale = headOnScale`:
+
+```
+shoveDv_toCarA = flatForward_carB × (attack_carB / defense_carA) × forwardSpeed_carB × headOnScale
+shoveDv_toCarB = flatForward_carA × (attack_carA / defense_carB) × forwardSpeed_carA × headOnScale
+```
+
+Each car's shove comes from the **other** car's attack, forward speed and heading, divided
+by its own defense. A parked car has `forwardSpeed = 0`, so `shoveDv_toCarA` above is the
+zero vector when car B is parked — the moving car (A) simply stops and receives nothing,
+while the parked car (B) is pushed by A's attack and speed. In an angled head-on the shove's
+sideways component (relative to the now-locked, zero-velocity car it lands on) is mostly
+removed by grip on the very next `DrivingModule.Tick`, since grip keeps running while
+Locked — only the reeling state turns it off. `RamReport.attacker` for a head-on is simply
+the car whose `OnCollisionEnter` happened to resolve the pair (see
+[Why velocities are overwritten, not added](#why-velocities-are-overwritten-not-added)); it
+carries no gameplay meaning since both cars are treated identically.
+
 Flank and rear rams also spin the victim, about world up:
 
 ```
@@ -92,8 +115,16 @@ An attacker (and both cars in a head-on) is Locked for `attackerLockSeconds`; a 
 rear victim Reels for `reelSeconds`. Locking never shortens a longer lock already running;
 reeling restarts on a fresh hit, so chaining rams on a helpless car keeps it helpless.
 Reeling takes precedence when both timers are running on the same car. When the reel ends,
-grip and steering resume through their normal code paths — grip is itself a 1/s decay, so
-the slide eases out rather than snapping straight.
+grip and steering resume through their normal code paths, but the two do not behave the
+same way. Grip is itself a 1/s decay (see [every decay value is a
+rate](driving-physics.md#every-decay-value-is-a-rate-in-1s)), so the sideways slide eases
+back in rather than vanishing in one step. Yaw does not: `DrivingModule` writes
+`angularVelocity` directly from `steer` every non-reeling tick (`steer` is 0 for the dummy),
+so whatever spin is still running when the reel ends is cut to zero in a single physics
+step, not eased out. With the placeholder reel (`reelSeconds = 1`) and spin decay
+(`spinDecayRate = 2`), `exp(-2 × 1) ≈ 13.5%` of the initial spin is typically still running
+at that moment and gets snapped away abruptly. Whether to blend yaw back in the way grip
+does is a gameplay/tuning decision for the user, not something fixed here.
 
 ## Why velocities are overwritten, not added
 
@@ -114,18 +145,40 @@ Both cars in a contact receive `OnCollisionEnter` for it in the same step. Which
 that `fixedTime` and returns without re-resolving. This guard remembers one partner per
 module, which is exactly right for the current two-car game — extending it to more
 simultaneous contacts is unfinished work. Rams resolve on `OnCollisionEnter` only, so
-continuous pushing while already touching is plain physics, not a repeated ram. With
-`logImpacts` enabled, `RammingModule` logs resolved rams and non-ram car-vs-car bumps; wall
-and ground contacts still raise the `Collided` event but are never logged, because a wall
-has no `CarController` to resolve against.
+continuous pushing while already touching is plain physics, not a repeated ram.
+
+`logImpacts` on **either** car of a pair is enough to see the log for that pair — the log
+checks both modules' flags and fires once, regardless of which car's `OnCollisionEnter`
+happened to resolve the contact. `RamReport.attacker`/`victim` for a resolved ram, and the
+`Rammed` event itself, are also unaffected by that ordering: `Rammed` is raised on **both**
+cars' `RammingModule`, so a subscriber on either car sees every ram it takes part in, not
+only the ones its own module happened to resolve. Wall and ground contacts still raise the
+`Collided` event but are never logged by `logImpacts`, because a wall has no `CarController`
+to resolve against.
 
 **Known risk — depenetration, not yet fixed.** Discrete collision detection lets fast cars
-overlap before `OnCollisionEnter` fires, by up to closing speed × fixed timestep — around 1 m
-in a 50 m/s head-on. On the next physics step PhysX separates the overlapping bodies at up
-to `Rigidbody.maxDepenetrationVelocity` (10 m/s by default), which can look like an opposing
-bounce right after this code has zeroed both velocities. It is most visible in head-ons.
-Candidates if play-testing shows it: lowering `maxDepenetrationVelocity` on cars, or
-`ContinuousSpeculative` collision detection — decide with the user before changing either.
+overlap before `OnCollisionEnter` fires, by up to closing speed × fixed timestep — with
+`Fixed Timestep = 0.02 s` (`ProjectSettings/TimeManager.asset`) that is up to 0.5 m at a
+single car's 25 m/s top speed, already more than `cornerBandMetres` (0.3 m). This shows up
+two ways:
+
+1. On the next physics step PhysX separates the overlapping bodies at up to
+   `Rigidbody.maxDepenetrationVelocity` (10 m/s by default), which can look like an opposing
+   bounce right after this code has zeroed both velocities. Most visible in head-ons.
+2. `RamRules.Region` classifies the **attacker's** own contact point too, and by the time the
+   contact is reported that point can already sit well inside the attacker's box rather than
+   right on its front bumper. An offset hit that should register as `FrontCorner` (still an
+   attack region, see [Type](#type)) can then be misread as `Side` — the attacker fails to
+   qualify and a real ram silently becomes a plain bump. The victim side of the same contact
+   is not similarly fooled: the angle test in `Classify` still separates head-on/rear from
+   flank correctly regardless of exactly where on the face the point lands.
+
+Neither is pre-emptively fixed. Candidates to decide with the user: lowering
+`maxDepenetrationVelocity` on cars, `ContinuousSpeculative` collision detection (helps both),
+or classifying the attacker's region from the local-space contact **normal** instead of the
+local-space contact **point** (helps only the second). Watch for the misread by driving
+offset hits at speed with `logImpacts` on and checking the logged region against what the hit
+looked like.
 
 ## Tests
 
