@@ -71,6 +71,16 @@ namespace MotorCombat.Core
             _input = provider;
         }
 
+        void OnEnable()
+        {
+            CarRegistry.Register(this);
+        }
+
+        void OnDisable()
+        {
+            CarRegistry.Unregister(this);
+        }
+
         void Update()
         {
             if (_input == null) return;

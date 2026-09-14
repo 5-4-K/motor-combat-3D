@@ -62,6 +62,17 @@ namespace MotorCombat.Bootstrap
             }
             crosshair.target = player;
             crosshair.view = cameraRig.GetComponent<Camera>();
+
+            var hud = HudRoot.Create();
+
+            var selfHealth = hud.gameObject.AddComponent<SelfHealthWidget>();
+            selfHealth.viewer = player;
+            selfHealth.Build(hud.Rect);
+
+            var enemyBars = hud.gameObject.AddComponent<EnemyHealthBars>();
+            enemyBars.viewer = player;
+            enemyBars.view = cameraRig.GetComponent<Camera>();
+            enemyBars.Build(hud.Rect);
         }
 
         bool Validate()

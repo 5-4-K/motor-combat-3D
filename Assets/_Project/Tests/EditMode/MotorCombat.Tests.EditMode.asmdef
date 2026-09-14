@@ -11,7 +11,9 @@
         "MotorCombat.Cars",
         "MotorCombat.Cameras",
         "MotorCombat.Ramming",
-        "MotorCombat.Combat"
+        "MotorCombat.Combat",
+        "MotorCombat.HUD",
+        "UnityEngine.UI"
     ],
     "includePlatforms": ["Editor"],
     "excludePlatforms": [],
