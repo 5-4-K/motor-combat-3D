@@ -5,6 +5,7 @@ using MotorCombat.Driving;
 using MotorCombat.Aiming;
 using MotorCombat.Ramming;
 using MotorCombat.Weapons;
+using MotorCombat.Effects;
 
 namespace MotorCombat.Cars
 {
@@ -77,6 +78,9 @@ namespace MotorCombat.Cars
 
             car.AddComponent<Health>().maxHealth = definition.maxHealth;
             car.AddComponent<WreckSequence>().config = definition.wreckConfig;
+
+            // Last, so it ticks after driving and ramming every physics step.
+            car.AddComponent<CarEffects>().config = definition.effectsConfig;
 
             controller.Bind(provider);
             return controller;

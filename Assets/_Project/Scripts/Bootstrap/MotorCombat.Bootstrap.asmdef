@@ -12,7 +12,8 @@
         "MotorCombat.Arena",
         "MotorCombat.Cameras",
         "MotorCombat.HUD",
-        "MotorCombat.Combat"
+        "MotorCombat.Combat",
+        "MotorCombat.Effects"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

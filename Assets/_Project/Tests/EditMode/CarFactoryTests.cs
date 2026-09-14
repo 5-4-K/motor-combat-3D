@@ -6,6 +6,7 @@ using MotorCombat.Driving;
 using MotorCombat.Aiming;
 using MotorCombat.Ramming;
 using MotorCombat.Combat;
+using MotorCombat.Effects;
 
 namespace MotorCombat.Tests
 {
@@ -39,6 +40,7 @@ namespace MotorCombat.Tests
 
             _definition.maxHealth = 750f;
             _definition.wreckConfig = ScriptableObject.CreateInstance<WreckConfig>();
+            _definition.effectsConfig = ScriptableObject.CreateInstance<EffectsConfig>();
 
             _car = CarFactory.Spawn(
                 _definition, Vector3.zero, Quaternion.identity, null, Color.white);
@@ -54,6 +56,7 @@ namespace MotorCombat.Tests
             Object.DestroyImmediate(_definition.aimConfig);
             Object.DestroyImmediate(_definition.ramConfig);
             Object.DestroyImmediate(_definition.wreckConfig);
+            Object.DestroyImmediate(_definition.effectsConfig);
             Object.DestroyImmediate(_definition);
         }
 
@@ -131,10 +134,11 @@ namespace MotorCombat.Tests
         }
 
         [Test]
-        public void Spawn_AttachesAllFourModules()
+        public void Spawn_AttachesAllFiveModules()
         {
             var modules = _car.GetComponents<ICarModule>();
-            Assert.AreEqual(4, modules.Length, "driving, aiming, ramming, weapons");
+            Assert.AreEqual(5, modules.Length, "driving, aiming, ramming, weapons, effects");
+            Assert.IsInstanceOf<CarEffects>(modules[4], "effects tick last, after driving and ramming");
         }
 
         [Test]
@@ -176,6 +180,15 @@ namespace MotorCombat.Tests
             var wreck = _car.GetComponent<WreckSequence>();
             Assert.IsNotNull(wreck);
             Assert.AreSame(_definition.wreckConfig, wreck.config);
+        }
+
+        [Test]
+        public void Spawn_AddsCarEffectsWithItsConfig()
+        {
+            var effects = _car.GetComponent<CarEffects>();
+            Assert.IsNotNull(effects);
+            Assert.AreSame(_definition.effectsConfig, effects.config);
+            Assert.AreSame(effects, _car.GetComponent<IEffectReceiver>());
         }
 
         // --- Visual: placeholder box ------------------------------------------

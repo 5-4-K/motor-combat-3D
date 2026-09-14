@@ -256,14 +256,5 @@ namespace MotorCombat.Tests
             float spin = RamRules.SpinDelta(new Vector3(0f, 5f, -2f), Vector3.zero, new Vector3(1f, 0f, 0f), W, L, 2f);
             Assert.AreEqual(-2.4f, spin, 1e-4f);
         }
-
-        [Test]
-        public void DecaySpin_IsTimestepIndependent()
-        {
-            float oneStep = RamRules.DecaySpin(3f, 2f, 0.02f);
-            float twoSteps = RamRules.DecaySpin(RamRules.DecaySpin(3f, 2f, 0.01f), 2f, 0.01f);
-            Assert.AreEqual(oneStep, twoSteps, 1e-5f);
-            Assert.Less(oneStep, 3f);
-        }
     }
 }

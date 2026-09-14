@@ -3,6 +3,7 @@ using MotorCombat.Driving;
 using MotorCombat.Aiming;
 using MotorCombat.Ramming;
 using MotorCombat.Combat;
+using MotorCombat.Effects;
 
 namespace MotorCombat.Cars
 {
@@ -67,5 +68,6 @@ namespace MotorCombat.Cars
         public AimConfig aimConfig;
         public RamConfig ramConfig;
         public WreckConfig wreckConfig;
+        public EffectsConfig effectsConfig;
     }
 }

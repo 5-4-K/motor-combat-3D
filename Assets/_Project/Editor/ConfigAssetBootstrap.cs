@@ -9,6 +9,7 @@ using MotorCombat.Cars;
 using MotorCombat.Ramming;
 using MotorCombat.Combat;
 using MotorCombat.Bootstrap;
+using MotorCombat.Effects;
 
 namespace MotorCombat.EditorTools
 {
@@ -33,12 +34,14 @@ namespace MotorCombat.EditorTools
             var ram = GetOrCreate<RamConfig>("RamConfig");
             var wreck = GetOrCreate<WreckConfig>("WreckConfig");
             GetOrCreate<RespawnConfig>("RespawnConfig");
+            var effects = GetOrCreate<EffectsConfig>("EffectsConfig");
 
             var car = GetOrCreate<CarDefinition>("CarDefinition");
             if (car.driveConfig == null) car.driveConfig = drive;
             if (car.aimConfig == null) car.aimConfig = aim;
             if (car.ramConfig == null) car.ramConfig = ram;
             if (car.wreckConfig == null) car.wreckConfig = wreck;
+            if (car.effectsConfig == null) car.effectsConfig = effects;
             EditorUtility.SetDirty(car);
 
             AssetDatabase.SaveAssets();

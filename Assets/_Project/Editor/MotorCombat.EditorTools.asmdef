@@ -13,7 +13,8 @@
         "MotorCombat.Cars",
         "MotorCombat.HUD",
         "MotorCombat.Bootstrap",
-        "MotorCombat.Combat"
+        "MotorCombat.Combat",
+        "MotorCombat.Effects"
     ],
     "includePlatforms": ["Editor"],
     "excludePlatforms": [],

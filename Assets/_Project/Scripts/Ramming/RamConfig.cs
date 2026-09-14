@@ -32,7 +32,7 @@ namespace MotorCombat.Ramming
         [Tooltip("How long the attacker (and both cars in a head-on) ignore throttle and steer.")]
         public float attackerLockSeconds = 0.5f;
 
-        [Tooltip("How long a flank or rear victim reels: no throttle, steer or grip; spins freely.")]
+        [Tooltip("How long a flank or rear victim Reels (the Reeling effect: no throttle, steer or grip; spins freely). Stacking and spin decay are set in EffectsConfig.")]
         public float reelSeconds = 1f;
 
         [Header("Thresholds")]
@@ -49,8 +49,5 @@ namespace MotorCombat.Ramming
         [Header("Spin")]
         [Tooltip("Multiplies the yaw a real impulse at the contact point would give. 1 = physical.")]
         public float spinScale = 1f;
-
-        [Tooltip("Rate in 1/s at which a reeling car's spin decays, as exp(-rate × dt).")]
-        public float spinDecayRate = 2f;
     }
 }

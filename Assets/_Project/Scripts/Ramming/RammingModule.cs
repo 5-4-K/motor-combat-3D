@@ -36,13 +36,12 @@ namespace MotorCombat.Ramming
         RammingModule _resolvedPartner;
         float _resolvedAt = -1f;
 
-        // Block sources for the ability switches. One key per kind of block is
-        // enough: every car owns its own CarAbilities.
+        // Block source for the attacker's lock. One key is enough: every car
+        // owns its own CarAbilities. The lock is how ram restitution feels, not
+        // an effect; the victim's reel IS an effect (Reeling), applied below.
         static readonly object LockBlock = new object();
-        static readonly object ReelBlock = new object();
 
         const CarAbility LockMask = CarAbility.Throttle | CarAbility.Steer | CarAbility.Ram;
-        const CarAbility ReelMask = CarAbility.Throttle | CarAbility.Steer | CarAbility.YawHold | CarAbility.Grip | CarAbility.Ram;
 
         // Looked up lazily: collision callbacks are not guaranteed to wait for Start.
         CarController Car => _car != null ? _car : (_car = GetComponent<CarController>());
@@ -55,15 +54,16 @@ namespace MotorCombat.Ramming
             {
                 Debug.LogError($"[MotorCombat] RammingModule on '{name}' has no RamConfig assigned — this car will neither ram nor be rammed.", this);
             }
+
+            if (GetComponent<IEffectReceiver>() == null)
+            {
+                Debug.LogWarning($"[MotorCombat] RammingModule on '{name}' found no IEffectReceiver — cars it rams will be shoved but will not reel.", this);
+            }
         }
 
         public void Tick(in CarInput input, float dt)
         {
-            if (config == null || Car.Abilities.Has(CarAbility.YawHold)) return;
-
-            // DrivingModule does not write yaw while YawHold is blocked; the spin winds down here.
-            Rigidbody body = Car.Body;
-            body.angularVelocity = Vector3.up * RamRules.DecaySpin(body.angularVelocity.y, config.spinDecayRate, dt);
+            // Nothing per step: the reel's spin decay belongs to the Reeling effect.
         }
 
         public void FrameTick(in CarInput input, float dt) { }
@@ -168,7 +168,13 @@ namespace MotorCombat.Ramming
 
             Vector3 preVelocity = victim.Car.PreStepVelocity;
             victim.SetHorizontalVelocity(preVelocity + shove, victim.Car.PreStepAngularVelocity.y + spin);
-            victim.Car.Abilities.Block(ReelBlock, ReelMask, config.reelSeconds, BlockRefresh.Restart);
+            victim.GetComponent<IEffectReceiver>()?.Apply(new EffectRequest
+            {
+                source = attacker.Car,
+                sourceTag = "ram",
+                type = EffectType.Reeling,
+                duration = config.reelSeconds
+            });
 
             float damage = RamRules.DamageFor(type, config.flankDamage, config.rearDamage);
             if (damage > 0f)

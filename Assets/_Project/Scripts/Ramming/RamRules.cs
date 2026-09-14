@@ -194,11 +194,5 @@ namespace MotorCombat.Ramming
 
             return spinScale * Vector3.Cross(offset, shoveDelta).y / radiusOfGyrationSquared;
         }
-
-        /// <summary>Exponential spin decay. <paramref name="rate"/> is in 1/s.</summary>
-        public static float DecaySpin(float yawRate, float rate, float dt)
-        {
-            return yawRate * Mathf.Exp(-rate * dt);
-        }
     }
 }

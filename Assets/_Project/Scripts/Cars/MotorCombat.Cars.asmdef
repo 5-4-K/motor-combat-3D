@@ -7,7 +7,8 @@
         "MotorCombat.Aiming",
         "MotorCombat.Ramming",
         "MotorCombat.Weapons",
-        "MotorCombat.Combat"
+        "MotorCombat.Combat",
+        "MotorCombat.Effects"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
