@@ -14,7 +14,7 @@ CarController ── owns the Rigidbody and aimYaw, ticks its ICarModules
         ├── RammingModule  (collision)    region + angle → shove victim, stop attacker; spin decay while reeling
         └── WeaponModule   (FrameTick + FixedUpdate)  slots → timing → muzzles → Shot
 
-CarAbilities (Core) ← ability blocks; written by Ramming and Health (the wreck block); read by Driving, Ramming
+CarAbilities (Core) ← ability blocks; written by Ramming and Health (the wreck block); read by Driving, Ramming, Weapons
 CarStats     (Core) ← base stats + modifiers; read by Combat, Ramming, Driving
 
 Health        (Combat) ← IDamageable; runs the damage path, raises Damaged / Destroyed
@@ -74,7 +74,7 @@ zones (sub-projects 2–6) are built entirely by calling into Core, not by chang
 
 Each module is a MonoBehaviour that reads config, calls a static pure function, and writes
 the result to the Rigidbody. The maths lives in `DrivePhysics` and `AimMath` — no
-`GameObject`, no scene, testable directly. This is why 368 EditMode tests run in under a
+`GameObject`, no scene, testable directly. This is why 372 EditMode tests run in under a
 second: most exercise a pure static directly, and the fixtures that don't (`CarFactoryTests`,
 `HealthTests`, `CarEffectsTests`, `CarRespawnTests`, `HudRootTests`, `WeaponModuleTests`,
 `PayloadApplierTests`, among others) still build only throwaway GameObjects for the one

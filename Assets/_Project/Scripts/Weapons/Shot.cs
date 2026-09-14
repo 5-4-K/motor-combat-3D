@@ -78,7 +78,6 @@ namespace MotorCombat.Weapons
             float step = ShotRules.StepDistance(_launch.settings.speed, dt, _remaining);
 
             int count = Physics.SphereCastNonAlloc(position, _launch.settings.radius, direction, Hits, step, _mask, QueryTriggerInteraction.Collide);
-            if (count > MaxHits) count = MaxHits;
 
             for (int i = 0; i < count; i++)
             {

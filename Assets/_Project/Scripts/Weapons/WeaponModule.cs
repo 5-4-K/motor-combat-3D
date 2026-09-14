@@ -74,6 +74,13 @@ namespace MotorCombat.Weapons
                 return;
             }
 
+            float fireHeight = config.fireHeight;
+            if (float.IsNaN(fireHeight) || float.IsInfinity(fireHeight) || fireHeight <= 0f)
+            {
+                Debug.LogError($"[MotorCombat] WeaponsConfig '{config.name}' fireHeight must be a finite number above 0 (is {fireHeight}); every weapon slot on '{name}' is disabled.", this);
+                return;
+            }
+
             if (loadout != null && loadout.Length > Slots)
             {
                 Debug.LogWarning($"[MotorCombat] WeaponModule on '{name}' has {loadout.Length} loadout entries; only the first {Slots} are used.", this);
@@ -233,6 +240,25 @@ namespace MotorCombat.Weapons
                 }
             }
 
+            switch (weapon.delivery)
+            {
+                case WeaponDelivery.Shot:
+                    ReleaseShots(weapon, attack);
+                    break;
+                default:
+                    // Unreachable today (validation rejects unknown values); a new
+                    // delivery adds its own case here.
+                    Debug.LogError($"[MotorCombat] Weapon '{weapon.name}' uses delivery {weapon.delivery}, which has no release handler yet.", this);
+                    return;
+            }
+
+            Log(slot, "fired");
+        }
+
+        /// <summary>The Shot delivery: one shot per muzzle, placed by MuzzleRules.</summary>
+        void ReleaseShots(WeaponConfig weapon, float attack)
+        {
+            CarController car = Car;
             Transform root = car.transform;
             Vector3 boxSize = _box != null ? _box.size : Vector3.one;
 
@@ -249,8 +275,6 @@ namespace MotorCombat.Weapons
                     Launch(weapon, MuzzleRules.Fixed(which, root.position, root.rotation, boxSize, config.fireHeight), attack);
                 }
             }
-
-            Log(slot, "fired");
         }
 
         void Launch(WeaponConfig weapon, in Muzzle muzzle, float attack)

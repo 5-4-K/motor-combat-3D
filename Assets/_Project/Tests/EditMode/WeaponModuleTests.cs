@@ -283,6 +283,19 @@ namespace MotorCombat.Tests
         }
 
         [Test]
+        public void NonPositiveFireHeight_LogsAnError_AndDisablesEverySlot()
+        {
+            _weaponsConfig.fireHeight = 0f;
+            Load(Weapon());
+            LogAssert.Expect(LogType.Error, new Regex("fireHeight must be a finite number above 0"));
+
+            PressAt(0, 0f);
+
+            Assert.AreEqual(0, _fired.Count);
+            Assert.IsFalse(Status(0, 0f).assigned);
+        }
+
+        [Test]
         public void LoadoutLongerThanThree_WarnsAndUsesTheFirstThree()
         {
             Load(Weapon(), Weapon(), Weapon(), Weapon());

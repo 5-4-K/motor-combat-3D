@@ -149,6 +149,15 @@ namespace MotorCombat.Tests
         }
 
         [Test]
+        public void Validate_UnknownDelivery_IsAnError()
+        {
+            _weapon.delivery = (WeaponDelivery)99;
+            Assert.IsFalse(Valid());
+            Assert.AreEqual(1, _errors.Count, string.Join("; ", _errors));
+            StringAssert.Contains("delivery", _errors[0]);
+        }
+
+        [Test]
         public void Validate_NullWeapon_IsAnError()
         {
             Assert.IsFalse(WeaponRules.Validate(null, 0.6f, _errors));

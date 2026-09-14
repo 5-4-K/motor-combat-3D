@@ -4,14 +4,14 @@
 
 An effect is a timed state on a car — a block, a stat modifier, a damage gate, or a periodic
 tick. How big and how long a given application is comes from whatever applies it (`RamConfig`
-today, weapon configs later); rules that are the same for every source of that effect —
+or a `WeaponConfig`); rules that are the same for every source of that effect —
 whether it stacks, Overheated's tick interval and damage kind, Reeling's spin decay rate, the
 Inspector debug sizes — live in `EffectsConfig`. There are ten effects: Stunned, Suppressed,
 Overheated, Corroded, Reeling, Spiked, Fortified, Armored, Overhauled, Exhausted.
 
 ## Applying one
 
-Every source — ramming today, weapons later — sends an `EffectRequest` through the target's
+Every source — ramming and weapons (hit payloads and self-effects) — sends an `EffectRequest` through the target's
 `IEffectReceiver.Apply`, implemented by `CarEffects`:
 
 | Field | Meaning |
@@ -168,8 +168,8 @@ effect's own `OnStart` added, never another effect's or another car's state.
 | `debugOverheatAmount` | 20 | Inspector debug menus, Overheated |
 
 Each source's own config still supplies magnitude and duration: `RamConfig.reelSeconds` is the
-ram's Reeling duration (see [ramming.md](ramming.md)); weapon configs follow in a later
-sub-project.
+ram's Reeling duration (see [ramming.md](ramming.md)); a `WeaponConfig` supplies them through
+its `hitPayload.effects` and `selfEffects` (see [weapons.md](weapons.md)).
 
 ## Debug menus
 

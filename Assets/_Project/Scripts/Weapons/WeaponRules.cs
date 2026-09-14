@@ -33,6 +33,24 @@ namespace MotorCombat.Weapons
                 errors.Add($"cooldownSeconds ({weapon.cooldownSeconds}) is shorter than recoverySeconds ({weapon.recoverySeconds}); the cooldown must be at least the recovery");
             }
 
+            if (!Enum.IsDefined(typeof(WeaponDelivery), weapon.delivery))
+            {
+                errors.Add($"delivery ({(int)weapon.delivery}) is not a known WeaponDelivery");
+            }
+            else if (weapon.delivery == WeaponDelivery.Shot)
+            {
+                ValidateShotDelivery(weapon, fireHeight, errors);
+            }
+
+            ValidatePayload(weapon.hitPayload, "hitPayload", errors);
+            ValidateEffects(weapon.selfEffects, "selfEffects", errors);
+
+            return errors.Count == before;
+        }
+
+        /// <summary>Muzzle placement and the shot's own numbers — both belong to the Shot delivery.</summary>
+        static void ValidateShotDelivery(WeaponConfig weapon, float fireHeight, List<string> errors)
+        {
             if (weapon.muzzle == MuzzleKind.Fixed && (weapon.fixedMuzzles & AllFixed) == 0)
             {
                 errors.Add("muzzle is Fixed but no fixed muzzle is selected");
@@ -46,11 +64,6 @@ namespace MotorCombat.Weapons
             {
                 errors.Add($"shot.radius ({weapon.shot.radius}) must be below the fire height ({fireHeight}), or the shot hits the floor");
             }
-
-            ValidatePayload(weapon.hitPayload, "hitPayload", errors);
-            ValidateEffects(weapon.selfEffects, "selfEffects", errors);
-
-            return errors.Count == before;
         }
 
         /// <summary>Checks one payload. Public so later hitboxes (explosions, fields) validate theirs the same way.</summary>

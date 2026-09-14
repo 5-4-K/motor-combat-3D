@@ -16,9 +16,9 @@ configured. Every muzzle on every car fires at the same **fire height** above th
 
 The shot itself is a straight sphere sweep at fixed speed with a maximum range — no gravity, no
 homing, no inheriting the car's own velocity. On a hit it delivers a **payload**: damage, zero or
-more timed effects, and an optional push. The same payload shape is reused for the weapon's
-**self-effects**, applied to the firing car itself when the shot leaves — a wind-up cost or a
-recoil debuff a weapon pays for firing.
+more timed effects, and an optional push. A weapon can also carry **self-effects** — a plain
+`EffectSpec[]` list (effects only: no damage, no push), applied to the firing car itself when
+the shot leaves — a wind-up cost or a recoil debuff a weapon pays for firing.
 
 See [combat.md](combat.md) for damage and effects, [effects.md](effects.md) for the effect
 system, and [ramming.md](ramming.md) for the push math weapons share with rams.
@@ -30,7 +30,7 @@ One `WeaponConfig` asset per weapon, under `Assets/_Project/Configs/Weapons/`:
 | Field | Meaning |
 |---|---|
 | `displayName` | Not read by code yet — for the Inspector and a future HUD |
-| `delivery` | `WeaponDelivery` — one value, `Shot`, today. Later sub-projects append values (bursts, pierce, explosions, …); nothing here has to change to add them |
+| `delivery` | `WeaponDelivery` — one value, `Shot`, today. A new delivery (aura, floor area, beam, maneuver, …) adds an enum value, a `case` in `WeaponModule.Release`, and its own delivery-specific validation branch in `WeaponRules.Validate`. `muzzle`, `fixedMuzzles` and `shot` belong to the `Shot` delivery |
 | `muzzle` | `MuzzleKind.Turret` or `MuzzleKind.Fixed` |
 | `fixedMuzzles` | `[Flags] FixedMuzzles` (`Front`, `Rear`, `Left`, `Right`); read only when `muzzle` is `Fixed` |
 | `cooldownSeconds` | Before this weapon can be pressed again. Starts on the press |
@@ -62,16 +62,20 @@ Referenced by `CarDefinition.weaponsConfig`, the same pattern as `effectsConfig`
 true once `errors` is empty; every broken rule adds one readable message rather than stopping at
 the first:
 
-| Rule | Error when |
-|---|---|
-| Recovery | `cooldownSeconds < recoverySeconds` |
-| Timings | any of `cooldownSeconds` / `windUpSeconds` / `recoverySeconds` is negative or non-finite |
-| Muzzles | `muzzle == Fixed` and `fixedMuzzles == None` |
-| Shot | `shot.speed`, `shot.range` or `shot.radius` is ≤ 0 or non-finite |
-| Floor clearance | `shot.radius ≥ fireHeight` — the sweep would touch the floor at once |
-| Damage | `hitPayload.damageAmount` is negative or non-finite |
-| Effects | any `EffectSpec` (hit or self) has a negative/non-finite magnitude, or an unknown type, or a timed type with `duration ≤ 0` (`EffectInfo.IsTimed`) |
-| Push | `hitPayload.push.speed < 0`; or `speed > 0` with `reelSeconds ≤ 0` or non-finite; or `spinScale` non-finite |
+| Rule | Applies to | Error when |
+|---|---|---|
+| Recovery | every delivery | `cooldownSeconds < recoverySeconds` |
+| Timings | every delivery | any of `cooldownSeconds` / `windUpSeconds` / `recoverySeconds` is negative or non-finite |
+| Delivery | every delivery | `delivery` is not a defined `WeaponDelivery` value |
+| Muzzles | `Shot` | `muzzle == Fixed` and `fixedMuzzles == None` |
+| Shot | `Shot` | `shot.speed`, `shot.range` or `shot.radius` is ≤ 0 or non-finite |
+| Floor clearance | `Shot` | `shot.radius ≥ fireHeight` — the sweep would touch the floor at once |
+| Damage | every delivery | `hitPayload.damageAmount` is negative or non-finite |
+| Effects | every delivery | any `EffectSpec` (hit or self) has a negative/non-finite magnitude, or an unknown type, or a timed type with `duration ≤ 0` (`EffectInfo.IsTimed`) |
+| Push | every delivery | `hitPayload.push.speed` is negative or non-finite; or `speed > 0` with `reelSeconds ≤ 0` or non-finite; or `spinScale` non-finite |
+
+Muzzle placement is part of the `Shot` delivery today, so its checks run only for `Shot`; a
+later delivery adds its own branch beside it.
 
 `WeaponRules.ValidatePayload` is the public entry a later hitbox (explosions, fields) validates
 its own payload with, and is what `Validate` calls for `hitPayload`.
@@ -86,7 +90,14 @@ Two call sites, two severities:
   draws exactly like an empty slot. This runs lazily, on first use (`Start`, the first `Step`, or
   the first `GetStatus`, whichever comes first) rather than only in `Start`: EditMode tests never
   run `Start`, and `CarFactory` assigns `config`/`loadout` after `AddComponent`, so `Start` alone
-  would miss both — the same pattern `CarEffects`' host already uses.
+  would miss both — the same pattern `CarEffects`' host already uses. Before any slot is
+  checked, a missing `WeaponsConfig`, or a `fireHeight` that is not a finite number above 0,
+  logs one error and disables every slot.
+
+**Validated once, then live.** `WeaponModule` validates each slot once, on that first use, and
+keeps a reference to the live asset. Editing a weapon asset during Play applies immediately
+without re-validation — only the Inspector warning fires, and that one skips the floor-clearance
+rule. Changing `loadout` during Play is ignored until the car is rebuilt.
 
 ## Timing
 
@@ -178,7 +189,7 @@ inertia — driving and ramming are unaffected.
 
 **The `Hurtbox` layer (index 11) ignores every other layer, 0–31**, configured the same way as
 `Arena`/`Car`/`Wreck` in `PhysicsLayers.ConfigureCollisions()`. It is reached only by a shot's
-own `Physics.SphereCastAll` query (`QueryTriggerInteraction.Collide`), never by an
+own `Physics.SphereCastNonAlloc` query (`QueryTriggerInteraction.Collide`), never by an
 `OnCollisionEnter`/`OnTriggerEnter` callback — nothing else in the game ever "touches" a
 hurtbox. A missing `Hurtbox` layer logs an error from the same place the other three layers do.
 
@@ -217,7 +228,7 @@ collider, no Rigidbody) and drives itself from `FixedUpdate`. Each physics step:
 4. `ShotRules.Resolve(candidates, count)` (pure) returns the nearest **stopper** or −1. A stopper
    is a wall, or a car that is **not** the shot's own, **is** targetable, and **is** an enemy —
    everything else (a wreck, the shot's own car, a non-enemy) is passed straight through.
-   **At equal distance a car beats a wall** (`ShotRules.IsStopper` breaks the tie toward the
+   **At equal distance a car beats a wall** (`ShotRules.Resolve` breaks the tie toward the
    car). Two boxes belonging to one car still resolve to a single hit, since only the nearest
    stopper is taken.
 5. A car stopper: the payload lands (see [Payload](#payload)) with the swept hit point, the
@@ -229,13 +240,19 @@ Shots pass through each other — nothing in `Shot` queries other shots. A shot 
 source car dies or despawns mid-flight; its `attack` was already snapshotted at the press, so it
 needs nothing more from the source car once launched.
 
+**`Shot` is the basic delivery only.** `Shot` and `ShotRules` stop at the first stopper, and
+carry no hit normal, no per-target hit memory, no lifetime beyond range, no end-of-life hook and
+no shape other than a sphere. Later projectiles (bounce, pierce, homing, after-effects) are
+expected to be new components that reuse `PayloadApplier`, the `Hurtbox` layer and
+`MuzzleRules`, not edits to `Shot`.
+
 **`_spent` guard.** `Shot.Perish()` is private and marks the shot spent *before* destroying the
-GameObject — `Destroy()` (play mode) or `DestroyImmediate()` (edit mode, since `Destroy` is
-illegal there and EditMode tests need it) is deferred to end of frame, not immediate. If a single
-frame runs more than one physics step, a shot that already hit or ran out of range this step must
-not sweep again from the same spot on a second `FixedUpdate` before the deferred destroy takes
-effect — `Advance` returns immediately once `_spent` is true, so a shot's payload can never land
-twice. Covered by `ShotTests`.
+GameObject. In play mode it calls `Destroy()`, which is deferred to the end of the frame; in edit
+mode (EditMode tests) it calls `DestroyImmediate()`, which is immediate, since `Destroy` is
+illegal there. If a single frame runs more than one physics step, a shot that already hit or ran
+out of range this step must not sweep again from the same spot on a second `FixedUpdate` before
+the deferred destroy takes effect — `Advance` returns immediately once `_spent` is true, so a
+shot's payload can never land twice. Covered by `ShotTests`.
 
 ## Payload
 
@@ -328,16 +345,16 @@ All numbers are placeholders for the user to tune — see [tuning.md](tuning.md)
 
 | Fixture | Count |
 |---|---|
-| `WeaponRulesTests` | 12 |
+| `WeaponRulesTests` | 13 |
 | `WeaponTimingTests` | 10 |
 | `MuzzleRulesTests` | 6 |
 | `ShotRulesTests` | 7 |
-| `ShotTests` | 1 |
+| `ShotTests` | 3 |
 | `PayloadRulesTests` | 5 |
 | `PayloadApplierTests` | 8 |
 | `PushMathTests` | 3 |
 | `HurtboxRulesTests` | 4 |
-| `WeaponModuleTests` | 18 |
+| `WeaponModuleTests` | 19 |
 | `WeaponSlotLayoutTests` | 4 |
 | `HudShapesTests` | 3 |
 | `WeaponSlotsWidgetTests` | 2 |
@@ -351,13 +368,17 @@ cancelling a wind-up, respawn clearing the lock but not cooldowns, self-effects 
 release rather than on the press, the attack snapshot being taken on the press, fixed muzzles
 firing one shot each in order, an invalid weapon disabling its slot, a self-Stun on release still
 letting that slot's own shot out while blocking a same-step press on another slot, a missing
-`WeaponsConfig` disabling every slot, a loadout longer than three warning and truncating, and the
-turret reading its direction at release rather than at the press. `PayloadApplierTests` covers
-effects landing, push velocity and spin, Reeling, damage, and stopping after effects already
-killed the target. `CarFactoryTests` and `PhysicsLayersTests` gained cases for the hurtbox child,
-its layer, its boxes, the empty-list error, and `Hurtbox` ignoring every layer. Shot sweeps
-against real scene colliders are verified in play (the checklist), not in EditMode — see
-[workflow.md](workflow.md#acceptance-checklist).
+`WeaponsConfig` disabling every slot, a `fireHeight` of 0 disabling every slot, a loadout longer
+than three warning and truncating, and the turret reading its direction at release rather than at
+the press. `WeaponRulesTests` also rejects an undefined `delivery` value. `ShotTests` covers the
+`_spent` guard on range expiry, and the hit path against real hurtbox triggers built by
+`CarFactory` (no scene, after `Physics.SyncTransforms()`): a shot hitting an enemy lands its Flat
+50 once and is spent, and a shot starting inside its own car's hurtbox passes through unspent.
+`PayloadApplierTests` covers effects landing, push velocity and spin, Reeling, damage, and
+stopping after effects already killed the target. `CarFactoryTests` and `PhysicsLayersTests`
+gained cases for the hurtbox child, its layer, its boxes, the empty-list error, and `Hurtbox`
+ignoring every layer. Walls, the arena floor and multi-step flight in a running physics loop are
+verified in play (the checklist) — see [workflow.md](workflow.md#acceptance-checklist).
 
 ## Decisions (awaiting confirmation)
 

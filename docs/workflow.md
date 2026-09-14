@@ -67,7 +67,7 @@ is rejected with *"conflicts with a reserved Unity flag managed by this command.
 
 ## Tests
 
-368 EditMode tests, sub-second. Nearly all test pure statics; a handful of fixtures
+372 EditMode tests, sub-second. Nearly all test pure statics; a handful of fixtures
 (`CarFactoryTests`, `HealthTests`, `CarEffectsTests`, `CarRespawnTests`, `HudRootTests`,
 `WeaponModuleTests`, `PayloadApplierTests`, among others) build throwaway GameObjects to
 exercise a real component, but none of them load a scene.
@@ -107,14 +107,14 @@ exercise a real component, but none of them load a scene.
 | `EffectChipRowTests` | 1 |
 | `HurtboxRulesTests` | 4 |
 | `PushMathTests` | 3 |
-| `WeaponRulesTests` | 12 |
+| `WeaponRulesTests` | 13 |
 | `WeaponTimingTests` | 10 |
 | `MuzzleRulesTests` | 6 |
 | `ShotRulesTests` | 7 |
-| `ShotTests` | 1 |
+| `ShotTests` | 3 |
 | `PayloadRulesTests` | 5 |
 | `PayloadApplierTests` | 8 |
-| `WeaponModuleTests` | 18 |
+| `WeaponModuleTests` | 19 |
 | `WeaponSlotLayoutTests` | 4 |
 | `HudShapesTests` | 3 |
 | `WeaponSlotsWidgetTests` | 2 |
