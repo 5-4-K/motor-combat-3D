@@ -365,7 +365,7 @@ Bootstrap compose them.
 | Projectile, obstacle and zone layers | New layers added next to §5's |
 | Impulse from weapons | Not a damage concern; sub-project 3 applies it through the Rigidbody, as ramming does |
 
-## 9. Decisions for the user to confirm
+## 9. Decisions (all confirmed by the user, 2026-09-14)
 
 1. The tick schedule survives contact breaks, so brushing in and out can't tick faster.
 2. A null damage source (environment) counts as an enemy of everyone and uses attack 100.
