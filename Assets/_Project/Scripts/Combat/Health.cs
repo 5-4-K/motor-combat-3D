@@ -59,7 +59,7 @@ namespace MotorCombat.Combat
                 request,
                 car.Abilities.Has(CarAbility.Targetable),
                 Hostility.AreEnemies(request.source, car),
-                request.source != null ? request.source.Stats.Effective(CarStat.Attack) : DamageRules.NeutralAttack,
+                request.attack ?? (request.source != null ? request.source.Stats.Effective(CarStat.Attack) : DamageRules.NeutralAttack),
                 car.Stats.Effective(CarStat.Defense));
 
             if (result.outcome != DamageOutcome.Applied) return result;

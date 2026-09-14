@@ -146,5 +146,27 @@ namespace MotorCombat.Tests
             Assert.AreEqual(100f, _target.Stats.Effective(CarStat.Defense), 1e-4f);
             Assert.AreEqual(DamageOutcome.Applied, _health.Apply(Flat(100f, _source)).outcome);
         }
+
+        [Test]
+        public void Apply_UsesTheAttackSnapshotWhenSet()
+        {
+            var request = Flat(100f, _source);
+            request.attack = 200f;
+
+            var result = _health.Apply(request);
+
+            Assert.AreEqual(200f, result.dealt, 1e-3f, "the snapshot wins over the source's live attack of 100");
+        }
+
+        [Test]
+        public void Apply_UsesTheAttackSnapshotForANullSourceToo()
+        {
+            var request = Flat(100f, null);
+            request.attack = 50f;
+
+            var result = _health.Apply(request);
+
+            Assert.AreEqual(50f, result.dealt, 1e-3f);
+        }
     }
 }

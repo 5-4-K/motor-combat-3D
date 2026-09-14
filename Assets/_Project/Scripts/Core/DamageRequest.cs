@@ -1,7 +1,7 @@
 namespace MotorCombat.Core
 {
     /// <summary>
-    /// One instance of damage. Every source — rams now, weapons and effects later —
+    /// One instance of damage. Every source — rams, effects, and weapons later —
     /// sends this same request, so the rules that apply to damage live in exactly
     /// one place. Tick damage is not a kind: a source sends ordinary requests on
     /// a <see cref="TickSchedule"/>.
@@ -21,5 +21,12 @@ namespace MotorCombat.Core
 
         /// <summary>False (default): only enemies take it. True: self and allies too, e.g. a self-inflicted debuff.</summary>
         public bool allowNonEnemy;
+
+        /// <summary>
+        /// Attack captured when the source fired (or, for Overheated, when the
+        /// effect landed). Null: the source's effective attack at impact, 100 for
+        /// a null source.
+        /// </summary>
+        public float? attack;
     }
 }
