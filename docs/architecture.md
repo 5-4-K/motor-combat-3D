@@ -72,8 +72,10 @@ zones (sub-projects 2–6) are built entirely by calling into Core, not by chang
 
 Each module is a MonoBehaviour that reads config, calls a static pure function, and writes
 the result to the Rigidbody. The maths lives in `DrivePhysics` and `AimMath` — no
-`GameObject`, no scene, testable directly. This is why 273 EditMode tests run in under a
-second with nothing instantiated.
+`GameObject`, no scene, testable directly. This is why 280 EditMode tests run in under a
+second: most exercise a pure static directly, and the fixtures that don't (`CarFactoryTests`,
+`HealthTests`, `CarEffectsTests`, `CarRespawnTests`, `HudRootTests`, among others) still build
+only throwaway GameObjects for the one component under test, never a scene.
 
 When adding a module, put the decision in a pure static and keep the MonoBehaviour dumb.
 

@@ -33,6 +33,25 @@ unity run . -- -executeMethod MotorCombat.EditorTools.ConfigAssetBootstrap.Creat
 unity run . -- -executeMethod MotorCombat.EditorTools.ArenaSceneBuilder.BuildScene
 ```
 
+**A headless `BuildScene` rewrites the whole scene, and it forgets two components.** It
+regenerates `Arena.unity` from scratch, so every line in the file churns even for a one-field
+change — a large, hard-to-review diff — and it does not add `UniversalAdditionalCameraData` /
+`UniversalAdditionalLightData` to the camera and the light, which the Editor normally attaches
+on its own the moment URP notices those objects. Running it headless silently drops both.
+
+To wire a new field on `GameBootstrap` (or any other component already in the scene) to an
+existing asset, prefer hand-adding the one serialized reference line to `Arena.unity` instead
+of rebuilding: find the `GameBootstrap` component's YAML block, and insert the new field in
+the same order it's declared in `GameBootstrap.cs`, in the shape
+
+```yaml
+  fieldName: {fileID: 11400000, guid: <guid from the asset's .meta>, type: 2}
+```
+
+(`fileID: 11400000` is the standard main-object id for a `ScriptableObject` asset; the guid
+comes from the target asset's own `.meta` file). Otherwise, set the reference in the Editor
+and save the scene there — either way, the scene changes by exactly the one field it needed to.
+
 ## Two CLI gotchas that cost real time
 
 **The Editor must be closed.** `unity test` and `unity run` cannot attach while the Editor
@@ -47,7 +66,10 @@ is rejected with *"conflicts with a reserved Unity flag managed by this command.
 
 ## Tests
 
-273 EditMode tests, sub-second. Nearly all test pure statics; `CarFactoryTests` builds throwaway GameObjects but loads no scene.
+280 EditMode tests, sub-second. Nearly all test pure statics; a handful of fixtures
+(`CarFactoryTests`, `HealthTests`, `CarEffectsTests`, `CarRespawnTests`, `HudRootTests`, among
+others) build throwaway GameObjects to exercise a real component, but none of them load a
+scene.
 
 | Fixture | Count |
 |---|---|
@@ -63,7 +85,7 @@ is rejected with *"conflicts with a reserved Unity flag managed by this command.
 | `CarStatsTests` | 10 |
 | `DamageRulesTests` | 9 |
 | `HealthStateTests` | 15 |
-| `TickScheduleTests` | 8 |
+| `TickScheduleTests` | 9 |
 | `HostilityTests` | 4 |
 | `HealthTests` | 9 |
 | `PhysicsLayersTests` | 3 |
@@ -79,8 +101,8 @@ is rejected with *"conflicts with a reserved Unity flag managed by this command.
 | `EffectRulesTests` | 12 |
 | `EffectSetTests` | 6 |
 | `EffectsConfigTests` | 2 |
-| `CarEffectsTests` | 24 |
-| `EffectChipLayoutTests` | 4 |
+| `CarEffectsTests` | 29 |
+| `EffectChipLayoutTests` | 5 |
 | `EffectChipRowTests` | 1 |
 
 The test assembly carries the `UNITY_INCLUDE_TESTS` define constraint, so tests never ship

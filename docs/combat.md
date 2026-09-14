@@ -207,8 +207,8 @@ clones are destroyed.
 
 ## Respawn
 
-`CarRespawn.Respawn(car, position, rotation)` (Core) brings a destroyed car back to life — or
-teleports a live one, which a future game mode may want — in this order:
+`CarRespawn.Respawn(car, position, rotation)` (Core) brings a destroyed car back to life, in
+this order:
 
 1. `ResetForRespawn()` runs on every `IRespawnable` component on the car root (see the table
    below), while the car is still inactive, so nothing runs a frame against the old life's
@@ -221,6 +221,12 @@ teleports a live one, which a future game mode may want — in this order:
 5. The `Rigidbody`'s position and rotation are set to the pose, and its linear and angular
    velocity are zeroed.
 
+Calling it on a still-live car — a future game mode may want to, for a teleport pad, say — is
+not a pure teleport: steps 1 and 5 still run, so it also refills health to max, clears every
+block (the ram lock included) and every stat modifier, and ends every active effect, exactly
+as it does for a destroyed car. There is no path through `CarRespawn` that moves a car's pose
+without also resetting its per-life state.
+
 ### What resets
 
 | Component | `ResetForRespawn()` |
@@ -230,7 +236,11 @@ teleports a live one, which a future game mode may want — in this order:
 | `CarEffects` | Ends every active effect — each one's `OnEnd` runs (see [effects.md](effects.md#death-and-respawn)) |
 
 A later module with per-life state (weapon cooldowns, say) joins respawn by implementing
-`IRespawnable` itself; nothing here changes.
+`IRespawnable` itself; nothing here changes. Its `ResetForRespawn` must only clear its own
+state, never add a block or a stat modifier: `Health.ResetForRespawn` (`UnblockAll`,
+`Stats.RemoveAll`) runs as just one `IRespawnable` among the others, in no guaranteed order
+relative to the rest, so a reset that adds a block or modifier could run before or after
+`Health`'s clear and either get wiped immediately or leak into the new life.
 
 ### The placeholder rule
 
@@ -307,7 +317,7 @@ takes an index, since the setting is per index-pair, not per name; it must call
 | `CarStatsTests` | 10 |
 | `DamageRulesTests` | 9 |
 | `HealthStateTests` | 15 |
-| `TickScheduleTests` | 8 |
+| `TickScheduleTests` | 9 |
 | `HostilityTests` | 4 |
 | `HealthTests` | 9 |
 | `PhysicsLayersTests` | 3 |

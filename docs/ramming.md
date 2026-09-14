@@ -133,6 +133,13 @@ instead of inside `RammingModule.Tick`, which no longer touches spin at all — 
 already-reeling car restarts the effect — `Restarted`, not a second entry — because
 `EffectsConfig.reelingStacks` is on by default; see [effects.md](effects.md#stacking).
 
+Because Reeling now goes through `IEffectReceiver.Apply` like every other effect, it passes
+the normal effect hostility check (`Hostility.AreEnemies`, unless `allowNonEnemy`) before it
+lands — the shove itself is physics, applied unconditionally, but the reel is not. Today
+every car is everyone else's enemy, so this changes nothing yet; once teams exist, flanking or
+rear-ramming a teammate still shoves them but does not reel them. The pre-effects reel block
+had no such check — it hit any car, teammate or not.
+
 | | Normal | Locked | Reeling |
 |---|---|---|---|
 | Throttle / steer | used | ignored (treated as 0) | ignored |

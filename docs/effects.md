@@ -57,13 +57,32 @@ start already ended it — for example, Overheated's first tick killing the car.
 never see `Applied` after `Ended` for the same application; the outcome the caller receives is
 still `Applied`.
 
+## Ending one early
+
+`IEffectReceiver.End(type, source)` lets a source end an effect before its timer runs out —
+but only the copy that `source` itself applied. Effects don't stack past one active entry per
+type, so the type's active copy may belong to someone else entirely (a different source's
+Fortified is still Fortified); that source's effect must run its full time regardless of what
+`source` wants ended. Matching is by reference — `ReferenceEquals(entry.source, source)` — so
+a `null` source matches only a copy applied with a `null` source. On a match, `End` runs the
+same end path as expiry (`OnEnd`, then `Ended`) and returns true; otherwise it returns false,
+including for a type that isn't active or isn't known.
+
+This is for a source that ends its own effect on something other than the clock: Wild Charge
+(see `docs/specs/2026-09-14-weapons-requirements.md`) gives the attacker self-Fortified for a
+duration, but ends it early — "on contact with an enemy... it deals flat damage, and the state
+ends" — and Tremor's self-buff (its shape is still undecided) should end the moment the car
+leaves the zone, not when its timer runs out. Both call `End(type, self)` rather than waiting
+for expiry, and neither risks cutting off some other source's Fortified that happens to be
+active on the same car instead of its own.
+
 ## The ten effects
 
 | Effect | Behaviour | Magnitude | Start | Step | End |
 |---|---|---|---|---|---|
 | Stunned | `StunnedEffect` | — | Block `Throttle\|Steer\|Fire\|Ram`; stop once: horizontal and angular velocity zeroed, vertical kept | — | Unblock |
 | Suppressed | `BlockEffect` | — | Block `Fire` | — | Unblock |
-| Overheated | `OverheatedEffect` | Damage per tick | Tick now | Tick when due | Forget the car's ticks |
+| Overheated | `OverheatedEffect` | Damage per tick | Tick now | Tick when due | Forget its own tick on the car |
 | Corroded | `StatEffect` | % | `Defense −m%` | — | Remove |
 | Reeling | `ReelingEffect` | — | Block `Throttle\|Steer\|YawHold\|Grip\|Ram` | Yaw rate × `exp(−reelingSpinDecayRate·dt)` | Unblock |
 | Spiked | `StatEffect` | % | `TopSpeed −m%` | — | Remove |
@@ -168,9 +187,31 @@ rejection and end.
 - **A stun cancels a maneuver** through `Has(Fire)` — a maneuver checks
   `CarAbilities.Has(CarAbility.Fire)` rather than querying `CarEffects` directly, since
   Stunned expresses itself as an ability block, not a flag a maneuver has to know about.
-- **Adding an 11th effect** means a new `EffectType` value, an `EffectInfo` update
-  (`IsBuff`/`IsTimed`/`UsesMagnitude` as needed), a new `EffectBehaviour` subclass wired into
-  `CarEffects.CreateBehaviours`, and a new `…Stacks` field on `EffectsConfig`.
+- **Adding an 11th effect** touches every layer, in this order:
+  1. A new `EffectType` value.
+  2. Bump `EffectInfo.Count`, and update `IsBuff`/`IsTimed`/`UsesMagnitude` if the new effect
+     needs to say yes to any of them (most timed effects need nothing done for `IsTimed`; it
+     already defaults to true for everything but Overhauled).
+  3. A new `…Stacks` field on `EffectsConfig`, and a case for it in `EffectsConfig.Stacks`.
+     `EffectsConfigTests.Stacks_ReadsEachEffectsOwnField` finds the field by reflection, named
+     `<type>Stacks` with the type's first letter lower-cased — get the name right or the test
+     fails on the new type.
+  4. An `EffectRules.BlockMask` case if it blocks abilities, or an `EffectRules.StatChange`
+     case if it's a stat modifier — only if the new effect is one of those shapes; skip both
+     for something like Overheated.
+  5. A behaviour class (or reuse `BlockEffect`/`StatEffect` for a plain shape) registered in
+     `CarEffects.CreateBehaviours`, at the new type's index.
+  6. `EffectChipLayout.Label` (exactly 4 letters, unique — `EffectChipLayoutTests` checks both)
+     and `EffectChipLayout.Colour`.
+  7. Re-save or regenerate `EffectsConfig.asset` (`ConfigAssetBootstrap.CreateDefaults`) so the
+     new `…Stacks` field exists in the serialized asset with its default value.
+  8. Tests: at minimum, extend `CarEffectsTests` with the new effect's own case, and check the
+     reflection and label tests above still pass.
+
+  A ticking effect (like Overheated) shares `EffectHost.Ticks` — one `TickSchedule` per car,
+  keyed by `(behaviour instance, car)` — with every other ticking effect on that car, so its
+  `OnEnd` must forget only its own key (`host.Ticks.Forget(this, host.Car)`), never the whole
+  car's schedule.
 
 ## Tests
 
@@ -182,11 +223,12 @@ EditMode, driven without a scene:
 | `EffectRulesTests` | 12 |
 | `EffectSetTests` | 6 |
 | `EffectsConfigTests` | 2 |
-| `CarEffectsTests` | 24 |
+| `CarEffectsTests` | 29 |
 
 `CarEffectsTests` exercises `CarEffects` end to end on a real `Health`, without a scene:
-blocks, stats, the Armored gate, Stunned's stop, Reeling's spin decay, Overheated's rhythm,
-the attack snapshot and both damage kinds, stacking both ways, same-stat addition, Overhauled,
+blocks, stats, the Armored gate, Stunned's stop, Reeling's spin decay, Overheated's rhythm and
+restack, ending only the source's own copy, the attack snapshot and both damage kinds,
+stacking both ways, same-stat addition, Overhauled,
 hostility, the wreck case, death and respawn, and `GetActive`'s order.
 
 Two things about how these tests work, not about the game:
