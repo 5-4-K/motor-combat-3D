@@ -129,6 +129,15 @@ namespace MotorCombat.Effects
                     return outcome;
             }
 
+            // The effect's own start can end it: an Overheated first tick that
+            // kills the car ends every effect before this line. Never report a
+            // start that subscribers have already seen end.
+            if (request.type != EffectType.Overhauled && !_set.IsActive(request.type))
+            {
+                Log(request, outcome);
+                return outcome;
+            }
+
             Log(request, outcome);
             Applied?.Invoke(new EffectReport
             {
@@ -185,7 +194,7 @@ namespace MotorCombat.Effects
         /// <summary>One physics step: expire, then step what is still active. Public so tests can drive time.</summary>
         public void Step(float dt, float now)
         {
-            if (_host == null || config == null) return;   // nothing has ever been applied
+            if (_host == null || config == null) return;   // Nothing has ever been applied, or the config was removed (effects then freeze until it returns).
 
             EffectHost host = Host;
             host.Now = now;

@@ -312,12 +312,32 @@ namespace MotorCombat.Tests
             Apply(EffectType.Corroded);
             Apply(EffectType.Overheated, magnitude: 10f, duration: 3f);
 
+            int damagedAfterDeath = 0;
             _health.Apply(Flat(5000f, _source));
+            _health.Damaged += report => damagedAfterDeath++;
 
             Assert.IsFalse(_effects.Has(EffectType.Corroded));
             Assert.IsFalse(_effects.Has(EffectType.Overheated));
             StepTo(1f, 1f);
             Assert.AreEqual(0f, _health.Current);
+            Assert.AreEqual(0, damagedAfterDeath, "no Overheated tick lands after death");
+        }
+
+        [Test]
+        public void Overheated_ThatKillsOnItsFirstTick_RaisesEndedButNotApplied()
+        {
+            var applied = new List<EffectReport>();
+            var ended = new List<EffectType>();
+            _effects.Applied += applied.Add;
+            _effects.Ended += ended.Add;
+            _health.Apply(Flat(995f, _source));
+
+            Assert.AreEqual(EffectOutcome.Applied, Apply(EffectType.Overheated, magnitude: 10f, duration: 3f));
+
+            Assert.IsTrue(_health.IsDestroyed);
+            Assert.IsFalse(_effects.Has(EffectType.Overheated));
+            CollectionAssert.AreEqual(new[] { EffectType.Overheated }, ended);
+            Assert.AreEqual(0, applied.Count, "subscribers must never see Applied after Ended");
         }
 
         [Test]
