@@ -18,6 +18,13 @@ namespace MotorCombat.Core
         /// </summary>
         public float aimDeltaX;
 
+        /// <summary>
+        /// Bit i is set when weapon slot i's key went down this frame (slot 0 = LMB,
+        /// 1 = RMB, 2 = Space). A per-frame event like aimDeltaX: the weapon module
+        /// consumes it once, never per physics step.
+        /// </summary>
+        public int firePressed;
+
         public static CarInput None => new CarInput();
     }
 }

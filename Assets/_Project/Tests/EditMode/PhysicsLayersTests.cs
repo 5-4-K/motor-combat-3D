@@ -12,12 +12,14 @@ namespace MotorCombat.Tests
     {
         bool[] _carRow;
         bool[] _wreckRow;
+        bool[] _hurtboxRow;
 
         [SetUp]
         public void SetUp()
         {
             _carRow = Capture(PhysicsLayers.Car);
             _wreckRow = Capture(PhysicsLayers.Wreck);
+            _hurtboxRow = Capture(PhysicsLayers.Hurtbox);
         }
 
         [TearDown]
@@ -25,6 +27,7 @@ namespace MotorCombat.Tests
         {
             Restore(PhysicsLayers.Car, _carRow);
             Restore(PhysicsLayers.Wreck, _wreckRow);
+            Restore(PhysicsLayers.Hurtbox, _hurtboxRow);
         }
 
         static bool[] Capture(int layer)
@@ -47,6 +50,7 @@ namespace MotorCombat.Tests
             Assert.AreEqual(8, PhysicsLayers.Arena);
             Assert.AreEqual(9, PhysicsLayers.Car);
             Assert.AreEqual(10, PhysicsLayers.Wreck);
+            Assert.AreEqual(11, PhysicsLayers.Hurtbox);
         }
 
         [Test]
@@ -67,6 +71,20 @@ namespace MotorCombat.Tests
 
             Assert.IsFalse(Physics.GetIgnoreLayerCollision(PhysicsLayers.Car, PhysicsLayers.Car));
             Assert.IsFalse(Physics.GetIgnoreLayerCollision(PhysicsLayers.Car, PhysicsLayers.Arena));
+        }
+
+        [Test]
+        public void ConfigureCollisions_HurtboxTouchesNothing()
+        {
+            PhysicsLayers.ConfigureCollisions();
+
+            for (int layer = 0; layer < 32; layer++)
+            {
+                Assert.IsTrue(Physics.GetIgnoreLayerCollision(PhysicsLayers.Hurtbox, layer), "layer " + layer);
+            }
+
+            Assert.IsFalse(Physics.GetIgnoreLayerCollision(PhysicsLayers.Car, PhysicsLayers.Car), "car rules untouched");
+            Assert.IsFalse(Physics.GetIgnoreLayerCollision(PhysicsLayers.Wreck, PhysicsLayers.Arena), "wreck rules untouched");
         }
     }
 }

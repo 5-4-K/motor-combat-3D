@@ -1,4 +1,5 @@
 using UnityEngine;
+using MotorCombat.Core;
 
 namespace MotorCombat.Ramming
 {
@@ -186,13 +187,7 @@ namespace MotorCombat.Ramming
         /// </summary>
         public static float SpinDelta(Vector3 contactPoint, Vector3 victimCentre, Vector3 shoveDelta, float width, float length, float spinScale)
         {
-            Vector3 offset = contactPoint - victimCentre;
-            offset.y = 0f;
-
-            float radiusOfGyrationSquared = (width * width + length * length) / 12f;
-            if (radiusOfGyrationSquared <= 0f) return 0f;
-
-            return spinScale * Vector3.Cross(offset, shoveDelta).y / radiusOfGyrationSquared;
+            return PushMath.SpinDelta(contactPoint, victimCentre, shoveDelta, width, length, spinScale);
         }
     }
 }
