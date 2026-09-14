@@ -25,8 +25,9 @@ namespace MotorCombat.EditorTools
             var cameraConfig = Load<CameraConfig>("CameraConfig");
             var arenaConfig = Load<ArenaConfig>("ArenaConfig");
             var carDefinition = Load<CarDefinition>("CarDefinition");
+            var respawnConfig = Load<RespawnConfig>("RespawnConfig");
 
-            if (cameraConfig == null || arenaConfig == null || carDefinition == null)
+            if (cameraConfig == null || arenaConfig == null || carDefinition == null || respawnConfig == null)
             {
                 Debug.LogError(
                     "[MotorCombat] Aborting scene build: one or more config assets are missing. " +
@@ -71,6 +72,7 @@ namespace MotorCombat.EditorTools
             var bootstrap = bootstrapObject.AddComponent<GameBootstrap>();
             bootstrap.arenaConfig = arenaConfig;
             bootstrap.carDefinition = carDefinition;
+            bootstrap.respawnConfig = respawnConfig;
             bootstrap.cameraRig = rig;
 
             EditorSceneManager.SaveScene(scene, ScenePath);

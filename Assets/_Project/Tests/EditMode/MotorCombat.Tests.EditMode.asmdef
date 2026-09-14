@@ -13,6 +13,7 @@
         "MotorCombat.Ramming",
         "MotorCombat.Combat",
         "MotorCombat.HUD",
+        "MotorCombat.Bootstrap",
         "UnityEngine.UI"
     ],
     "includePlatforms": ["Editor"],

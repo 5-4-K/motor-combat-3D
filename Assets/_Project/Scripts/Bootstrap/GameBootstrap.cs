@@ -17,6 +17,7 @@ namespace MotorCombat.Bootstrap
         [Header("Configs")]
         public ArenaConfig arenaConfig;
         public CarDefinition carDefinition;
+        public RespawnConfig respawnConfig;
 
         [Header("Scene references")]
         public CameraRig cameraRig;
@@ -35,23 +36,30 @@ namespace MotorCombat.Bootstrap
 
             float halfHeight = carDefinition.height * 0.5f;
 
+            var playerPosition = new Vector3(0f, halfHeight, 0f);
             var playerInput = gameObject.AddComponent<LocalInputProvider>();
             var player = CarFactory.Spawn(
                 carDefinition,
-                new Vector3(0f, halfHeight, 0f),
+                playerPosition,
                 Quaternion.identity,
                 playerInput,
                 new Color(0.20f, 0.55f, 0.90f));
             player.name = "PlayerCar";
 
+            var dummyPosition = new Vector3(0f, halfHeight, dummyDistanceInCarLengths * carDefinition.length);
             var dummyInput = gameObject.AddComponent<NullInputProvider>();
             var dummy = CarFactory.Spawn(
                 carDefinition,
-                new Vector3(0f, halfHeight, dummyDistanceInCarLengths * carDefinition.length),
+                dummyPosition,
                 Quaternion.identity,
                 dummyInput,
                 new Color(0.85f, 0.35f, 0.25f));
             dummy.name = "DummyCar";
+
+            var respawn = gameObject.AddComponent<RespawnRule>();
+            respawn.config = respawnConfig;
+            respawn.Track(player, playerPosition, Quaternion.identity);
+            respawn.Track(dummy, dummyPosition, Quaternion.identity);
 
             cameraRig.Follow(player);
 
@@ -79,6 +87,7 @@ namespace MotorCombat.Bootstrap
         {
             if (arenaConfig == null) { Debug.LogError("[MotorCombat] GameBootstrap.arenaConfig is not assigned."); return false; }
             if (carDefinition == null) { Debug.LogError("[MotorCombat] GameBootstrap.carDefinition is not assigned."); return false; }
+            if (respawnConfig == null) { Debug.LogError("[MotorCombat] GameBootstrap.respawnConfig is not assigned."); return false; }
             if (carDefinition.driveConfig == null) { Debug.LogError("[MotorCombat] CarDefinition.driveConfig is not assigned."); return false; }
             if (carDefinition.aimConfig == null) { Debug.LogError("[MotorCombat] CarDefinition.aimConfig is not assigned."); return false; }
             if (carDefinition.ramConfig == null) { Debug.LogError("[MotorCombat] CarDefinition.ramConfig is not assigned."); return false; }

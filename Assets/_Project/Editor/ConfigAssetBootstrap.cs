@@ -8,6 +8,7 @@ using MotorCombat.Cameras;
 using MotorCombat.Cars;
 using MotorCombat.Ramming;
 using MotorCombat.Combat;
+using MotorCombat.Bootstrap;
 
 namespace MotorCombat.EditorTools
 {
@@ -31,6 +32,7 @@ namespace MotorCombat.EditorTools
             GetOrCreate<CameraConfig>("CameraConfig");
             var ram = GetOrCreate<RamConfig>("RamConfig");
             var wreck = GetOrCreate<WreckConfig>("WreckConfig");
+            GetOrCreate<RespawnConfig>("RespawnConfig");
 
             var car = GetOrCreate<CarDefinition>("CarDefinition");
             if (car.driveConfig == null) car.driveConfig = drive;
