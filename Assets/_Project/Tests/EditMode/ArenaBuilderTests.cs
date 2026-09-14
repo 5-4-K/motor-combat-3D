@@ -1,6 +1,7 @@
 using NUnit.Framework;
 using UnityEngine;
 using MotorCombat.Arena;
+using MotorCombat.Core;
 
 namespace MotorCombat.Tests
 {
@@ -98,6 +99,25 @@ namespace MotorCombat.Tests
             Assert.AreEqual(
                 ArenaBuilder.GroundTileSize(config, CarLength),
                 ArenaBuilder.WallTileSize(config, CarLength), 1e-4f);
+        }
+
+        [Test]
+        public void Build_PutsGroundAndWallOnTheArenaLayer()
+        {
+            var config = Config();
+            config.groundMaterial = AnyMaterial();
+            config.wallMaterial = AnyMaterial();
+
+            GameObject root = ArenaBuilder.Build(config, CarLength);
+            try
+            {
+                Assert.AreEqual(PhysicsLayers.Arena, root.transform.Find("Ground").gameObject.layer);
+                Assert.AreEqual(PhysicsLayers.Arena, root.transform.Find("Wall").gameObject.layer);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
         }
     }
 }

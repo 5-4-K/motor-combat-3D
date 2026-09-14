@@ -38,6 +38,7 @@ namespace MotorCombat.Tests
             _definition.resistance = 3f;
 
             _definition.maxHealth = 750f;
+            _definition.wreckConfig = ScriptableObject.CreateInstance<WreckConfig>();
 
             _car = CarFactory.Spawn(
                 _definition, Vector3.zero, Quaternion.identity, null, Color.white);
@@ -52,6 +53,7 @@ namespace MotorCombat.Tests
             Object.DestroyImmediate(_definition.driveConfig);
             Object.DestroyImmediate(_definition.aimConfig);
             Object.DestroyImmediate(_definition.ramConfig);
+            Object.DestroyImmediate(_definition.wreckConfig);
             Object.DestroyImmediate(_definition);
         }
 
@@ -160,6 +162,20 @@ namespace MotorCombat.Tests
             Assert.IsNotNull(health);
             Assert.AreEqual(750f, health.Max);
             Assert.IsNotNull(_car.GetComponent<IDamageable>());
+        }
+
+        [Test]
+        public void Spawn_PutsTheRootOnTheCarLayer()
+        {
+            Assert.AreEqual(PhysicsLayers.Car, _car.gameObject.layer);
+        }
+
+        [Test]
+        public void Spawn_AddsTheWreckSequenceWithItsConfig()
+        {
+            var wreck = _car.GetComponent<WreckSequence>();
+            Assert.IsNotNull(wreck);
+            Assert.AreSame(_definition.wreckConfig, wreck.config);
         }
 
         // --- Visual: placeholder box ------------------------------------------

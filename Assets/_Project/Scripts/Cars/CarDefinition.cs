@@ -2,6 +2,7 @@ using UnityEngine;
 using MotorCombat.Driving;
 using MotorCombat.Aiming;
 using MotorCombat.Ramming;
+using MotorCombat.Combat;
 
 namespace MotorCombat.Cars
 {
@@ -65,5 +66,6 @@ namespace MotorCombat.Cars
         public DriveConfig driveConfig;
         public AimConfig aimConfig;
         public RamConfig ramConfig;
+        public WreckConfig wreckConfig;
     }
 }

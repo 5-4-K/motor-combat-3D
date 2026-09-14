@@ -11,7 +11,8 @@
         "MotorCombat.Cars",
         "MotorCombat.Arena",
         "MotorCombat.Cameras",
-        "MotorCombat.HUD"
+        "MotorCombat.HUD",
+        "MotorCombat.Combat"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

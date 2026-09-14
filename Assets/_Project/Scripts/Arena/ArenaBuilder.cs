@@ -1,4 +1,5 @@
 using UnityEngine;
+using MotorCombat.Core;
 
 namespace MotorCombat.Arena
 {
@@ -126,6 +127,9 @@ namespace MotorCombat.Arena
         {
             var piece = new GameObject(name);
             piece.transform.SetParent(parent, false);
+
+            int arenaLayer = PhysicsLayers.Arena;
+            if (arenaLayer >= 0) piece.layer = arenaLayer;
 
             piece.AddComponent<MeshFilter>().sharedMesh = mesh;
 

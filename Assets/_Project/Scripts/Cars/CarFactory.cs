@@ -36,6 +36,9 @@ namespace MotorCombat.Cars
             var car = new GameObject(definition.name);
             car.transform.SetPositionAndRotation(position, rotation);
 
+            int carLayer = PhysicsLayers.Car;
+            if (carLayer >= 0) car.layer = carLayer;
+
             if (definition.visualPrefab != null)
             {
                 BuildModelVisual(car.transform, definition, colour);
@@ -73,6 +76,7 @@ namespace MotorCombat.Cars
             car.AddComponent<WeaponModule>();
 
             car.AddComponent<Health>().maxHealth = definition.maxHealth;
+            car.AddComponent<WreckSequence>().config = definition.wreckConfig;
 
             controller.Bind(provider);
             return controller;

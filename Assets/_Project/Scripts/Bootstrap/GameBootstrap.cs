@@ -4,6 +4,7 @@ using MotorCombat.Cars;
 using MotorCombat.Arena;
 using MotorCombat.Cameras;
 using MotorCombat.HUD;
+using MotorCombat.Core;
 
 namespace MotorCombat.Bootstrap
 {
@@ -27,6 +28,8 @@ namespace MotorCombat.Bootstrap
         void Start()
         {
             if (!Validate()) return;
+
+            PhysicsLayers.ConfigureCollisions();
 
             ArenaBuilder.Build(arenaConfig, carDefinition.length);
 
@@ -68,6 +71,7 @@ namespace MotorCombat.Bootstrap
             if (carDefinition.driveConfig == null) { Debug.LogError("[MotorCombat] CarDefinition.driveConfig is not assigned."); return false; }
             if (carDefinition.aimConfig == null) { Debug.LogError("[MotorCombat] CarDefinition.aimConfig is not assigned."); return false; }
             if (carDefinition.ramConfig == null) { Debug.LogError("[MotorCombat] CarDefinition.ramConfig is not assigned."); return false; }
+            if (carDefinition.wreckConfig == null) { Debug.LogError("[MotorCombat] CarDefinition.wreckConfig is not assigned."); return false; }
             if (cameraRig == null) { Debug.LogError("[MotorCombat] GameBootstrap.cameraRig is not assigned."); return false; }
             if (cameraRig.config == null) { Debug.LogError("[MotorCombat] CameraRig.config is not assigned."); return false; }
             return true;
