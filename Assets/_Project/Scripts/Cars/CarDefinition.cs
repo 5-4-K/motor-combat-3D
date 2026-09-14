@@ -40,13 +40,26 @@ namespace MotorCombat.Cars
                  "modified and the two cars can differ.")]
         public Material[] tintedMaterials;
 
+        [Header("Combat stats")]
+        [Tooltip("Hit points.")]
+        [Min(1f)]
+        public float maxHealth = 1000f;
+
+        [Tooltip("Damage multiplier. 100 deals a weapon's listed damage; 150 deals 50% more.")]
+        [Min(0f)]
+        public float attack = 100f;
+
+        [Tooltip("Damage reduction with diminishing returns: damage × 100 / (100 + defense). 0 takes full damage, 100 takes half.")]
+        [Min(0f)]
+        public float defense = 0f;
+
         [Header("Ramming")]
-        [Tooltip("Multiplies the shove this car deals when it rams. Balanced against the victim's defense as a ratio.")]
-        public float attack = 1f;
+        [Tooltip("Multiplies the shove this car deals when it rams. Balanced against the victim's resistance as a ratio.")]
+        public float strength = 1f;
 
         [Tooltip("Divides the shove this car receives when rammed. Must be above zero.")]
         [Min(0.01f)]
-        public float defense = 1f;
+        public float resistance = 1f;
 
         [Header("Behaviour")]
         public DriveConfig driveConfig;

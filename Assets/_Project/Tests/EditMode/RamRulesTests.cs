@@ -188,18 +188,18 @@ namespace MotorCombat.Tests
         }
 
         [Test]
-        public void ShoveDelta_IsAttackOverDefenseTimesSpeedTimesScale_AlongHeading()
+        public void ShoveDelta_IsStrengthOverResistanceTimesSpeedTimesScale_AlongHeading()
         {
-            Vector3 shove = RamRules.ShoveDelta(Vector3.forward, attack: 2f, defense: 1f, speed: 10f, scale: 1.5f);
+            Vector3 shove = RamRules.ShoveDelta(Vector3.forward, strength: 2f, resistance: 1f, speed: 10f, scale: 1.5f);
             Assert.AreEqual(0f, shove.x, 1e-4f);
             Assert.AreEqual(0f, shove.y, 1e-4f);
             Assert.AreEqual(30f, shove.z, 1e-4f);
         }
 
         [Test]
-        public void ShoveDelta_HigherDefenseShrinksItProportionally()
+        public void ShoveDelta_HigherResistanceShrinksItProportionally()
         {
-            Vector3 shove = RamRules.ShoveDelta(Vector3.right, attack: 1f, defense: 2f, speed: 10f, scale: 1f);
+            Vector3 shove = RamRules.ShoveDelta(Vector3.right, strength: 1f, resistance: 2f, speed: 10f, scale: 1f);
             Assert.AreEqual(5f, shove.x, 1e-4f);
         }
 
@@ -211,10 +211,10 @@ namespace MotorCombat.Tests
         }
 
         [Test]
-        public void ShoveDelta_ZeroDefenseIsClampedInsteadOfDividingByZero()
+        public void ShoveDelta_ZeroResistanceIsClampedInsteadOfDividingByZero()
         {
             Vector3 shove = RamRules.ShoveDelta(Vector3.forward, 1f, 0f, 1f, 1f);
-            Assert.AreEqual(1f / RamRules.MinDefense, shove.z, 1e-2f);
+            Assert.AreEqual(1f / RamRules.MinResistance, shove.z, 1e-2f);
         }
 
         // --- Spin -------------------------------------------------------------

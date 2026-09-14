@@ -49,7 +49,7 @@ namespace MotorCombat.Driving
                 forward,
                 body.linearVelocity,
                 throttle,
-                config.enginePower,
+                config.enginePower * _car.Stats.Effective(CarStat.TopSpeed),
                 config.brakeForce,
                 config.reversePower,
                 config.reverseEpsilon);

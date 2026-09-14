@@ -31,8 +31,10 @@ namespace MotorCombat.Tests
             _definition.driveConfig = ScriptableObject.CreateInstance<DriveConfig>();
             _definition.aimConfig = ScriptableObject.CreateInstance<AimConfig>();
             _definition.ramConfig = ScriptableObject.CreateInstance<RamConfig>();
-            _definition.attack = 2f;
-            _definition.defense = 3f;
+            _definition.attack = 150f;
+            _definition.defense = 40f;
+            _definition.strength = 2f;
+            _definition.resistance = 3f;
 
             _car = CarFactory.Spawn(
                 _definition, Vector3.zero, Quaternion.identity, null, Color.white);
@@ -138,12 +140,14 @@ namespace MotorCombat.Tests
         }
 
         [Test]
-        public void Spawn_WiresRamConfigAndStatsFromTheDefinition()
+        public void Spawn_WiresRamConfigAndStatBasesFromTheDefinition()
         {
-            var ramming = _car.GetComponent<RammingModule>();
-            Assert.AreSame(_definition.ramConfig, ramming.config);
-            Assert.AreEqual(2f, ramming.attack);
-            Assert.AreEqual(3f, ramming.defense);
+            Assert.AreSame(_definition.ramConfig, _car.GetComponent<RammingModule>().config);
+            Assert.AreEqual(150f, _car.Stats.Base(CarStat.Attack));
+            Assert.AreEqual(40f, _car.Stats.Base(CarStat.Defense));
+            Assert.AreEqual(2f, _car.Stats.Base(CarStat.Strength));
+            Assert.AreEqual(3f, _car.Stats.Base(CarStat.Resistance));
+            Assert.AreEqual(1f, _car.Stats.Base(CarStat.TopSpeed));
         }
 
         // --- Visual: placeholder box ------------------------------------------

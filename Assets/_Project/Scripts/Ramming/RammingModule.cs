@@ -19,12 +19,6 @@ namespace MotorCombat.Ramming
     {
         public RamConfig config;
 
-        [Tooltip("Set from CarDefinition by CarFactory.")]
-        public float attack = 1f;
-
-        [Tooltip("Set from CarDefinition by CarFactory.")]
-        public float defense = 1f;
-
         [Tooltip("Logs resolved rams and car-vs-car bumps to the console (walls are never logged). Ticking this on either car of a pair is enough — the log fires once per contact either way.")]
         public bool logImpacts;
 
@@ -161,7 +155,12 @@ namespace MotorCombat.Ramming
         void ApplyRam(RammingModule attacker, RammingModule victim, in RamParticipant attackerSide, in RamParticipant victimSide, Vector3 contact, RamType type)
         {
             float scale = RamRules.ScaleFor(type, config.headOnScale, config.flankScale, config.rearScale);
-            Vector3 shove = RamRules.ShoveDelta(attackerSide.flatForward, attacker.attack, victim.defense, attackerSide.forwardSpeed, scale);
+            Vector3 shove = RamRules.ShoveDelta(
+                attackerSide.flatForward,
+                attacker.Car.Stats.Effective(CarStat.Strength),
+                victim.Car.Stats.Effective(CarStat.Resistance),
+                attackerSide.forwardSpeed,
+                scale);
             float spin = RamRules.SpinDelta(contact, victim.transform.position, shove, victim.Box.size.x, victim.Box.size.z, config.spinScale);
 
             attacker.SetHorizontalVelocity(Vector3.zero, 0f);
@@ -176,10 +175,20 @@ namespace MotorCombat.Ramming
 
         void ApplyHeadOn(RammingModule partner, in RamParticipant self, in RamParticipant them)
         {
-            // Each car is shoved by the OTHER car's attack, speed and heading, and
-            // resists with its own defense. Through the centre: no spin.
-            Vector3 toSelf = RamRules.ShoveDelta(them.flatForward, partner.attack, defense, them.forwardSpeed, config.headOnScale);
-            Vector3 toPartner = RamRules.ShoveDelta(self.flatForward, attack, partner.defense, self.forwardSpeed, config.headOnScale);
+            // Each car is shoved by the OTHER car's strength, speed and heading, and
+            // resists with its own resistance. Through the centre: no spin.
+            Vector3 toSelf = RamRules.ShoveDelta(
+                them.flatForward,
+                partner.Car.Stats.Effective(CarStat.Strength),
+                Car.Stats.Effective(CarStat.Resistance),
+                them.forwardSpeed,
+                config.headOnScale);
+            Vector3 toPartner = RamRules.ShoveDelta(
+                self.flatForward,
+                Car.Stats.Effective(CarStat.Strength),
+                partner.Car.Stats.Effective(CarStat.Resistance),
+                self.forwardSpeed,
+                config.headOnScale);
 
             SetHorizontalVelocity(toSelf, 0f);
             partner.SetHorizontalVelocity(toPartner, 0f);

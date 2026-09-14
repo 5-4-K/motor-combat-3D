@@ -3,7 +3,7 @@ using UnityEngine;
 namespace MotorCombat.Ramming
 {
     /// <summary>
-    /// Global ram tuning. Per-car stats (attack, defense) live on CarDefinition.
+    /// Global ram tuning. Per-car stats (strength, resistance) live on CarDefinition.
     /// Every value here is a placeholder — tuning belongs to the designer.
     /// </summary>
     [CreateAssetMenu(menuName = "Motor Combat/Ram Config", fileName = "RamConfig")]

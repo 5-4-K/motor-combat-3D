@@ -63,10 +63,12 @@ namespace MotorCombat.Cars
 
             car.AddComponent<DrivingModule>().config = definition.driveConfig;
             car.AddComponent<AimModule>().config = definition.aimConfig;
-            var ramming = car.AddComponent<RammingModule>();
-            ramming.config = definition.ramConfig;
-            ramming.attack = definition.attack;
-            ramming.defense = definition.defense;
+            controller.Stats.SetBase(CarStat.Attack, definition.attack);
+            controller.Stats.SetBase(CarStat.Defense, definition.defense);
+            controller.Stats.SetBase(CarStat.Strength, definition.strength);
+            controller.Stats.SetBase(CarStat.Resistance, definition.resistance);
+
+            car.AddComponent<RammingModule>().config = definition.ramConfig;
             car.AddComponent<WeaponModule>();
 
             controller.Bind(provider);

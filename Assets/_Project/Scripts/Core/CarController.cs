@@ -26,6 +26,9 @@ namespace MotorCombat.Core
         /// <summary>Ability switches. Blocked by rams, wrecks and (later) effects; obeyed by driving, ramming and weapons.</summary>
         public CarAbilities Abilities { get; } = new CarAbilities();
 
+        /// <summary>Base stats and percentage modifiers. Set by CarFactory; modified by effects; read by damage, ramming and driving.</summary>
+        public CarStats Stats { get; } = new CarStats();
+
         /// <summary>
         /// Velocity going INTO the last physics step, recorded after every module
         /// ticked. Collision callbacks run after the step, by which time PhysX has

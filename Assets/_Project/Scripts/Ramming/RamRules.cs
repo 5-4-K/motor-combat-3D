@@ -38,8 +38,8 @@ namespace MotorCombat.Ramming
     /// </summary>
     public static class RamRules
     {
-        /// <summary>Floor for defense so a misconfigured zero cannot divide by zero.</summary>
-        public const float MinDefense = 0.01f;
+        /// <summary>Floor for resistance so a misconfigured zero cannot divide by zero.</summary>
+        public const float MinResistance = 0.01f;
 
         public static Vector3 FlatForward(Vector3 forward)
         {
@@ -155,16 +155,16 @@ namespace MotorCombat.Ramming
         }
 
         /// <summary>
-        /// Velocity change for the victim. Mass is deliberately ignored: attack and
-        /// defense are the only balance levers. With equal stats and scale 1 the
+        /// Velocity change for the victim. Mass is deliberately ignored: strength and
+        /// resistance are the only balance levers. With equal stats and scale 1 the
         /// victim leaves at the attacker's speed. Never vertical.
         /// </summary>
         /// <param name="attackerFlatForward">Horizontal unit heading of the attacker.</param>
-        public static Vector3 ShoveDelta(Vector3 attackerFlatForward, float attack, float defense, float speed, float scale)
+        public static Vector3 ShoveDelta(Vector3 attackerFlatForward, float strength, float resistance, float speed, float scale)
         {
             Vector3 direction = attackerFlatForward;
             direction.y = 0f;
-            return direction * (attack / Mathf.Max(MinDefense, defense) * speed * scale);
+            return direction * (strength / Mathf.Max(MinResistance, resistance) * speed * scale);
         }
 
         /// <summary>
