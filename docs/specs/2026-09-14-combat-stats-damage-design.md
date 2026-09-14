@@ -17,9 +17,10 @@ Weapons are built as six sub-projects, each with its own spec → plan → imple
 | 5 | Areas, auras, beams | 3 |
 | 6 | Maneuvers & self-states | 2, 3 |
 
-**Closed-spec rule (user requirement).** A later sub-project only *adds*: new files, new config
-types, new implementations of existing interfaces, new registrations. It never edits an earlier
-sub-project's code or spec. This spec therefore creates every seam §8 lists, checked against the
+**Closed-spec rule (user requirement, clarified 2026-09-14).** A later sub-project must not need
+a *major change or rework* of an earlier one. Adding new files, config types, implementations and
+registrations is expected, and so are small append-only edits to composition roots (`CarFactory`,
+`CarDefinition`, `GameBootstrap`, `ConfigAssetBootstrap`, asmdef references, doc tables). This spec therefore creates every seam §8 lists, checked against the
 user's eleven example weapons and ten effects.
 
 ## 1. Stats
