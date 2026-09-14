@@ -146,5 +146,30 @@ namespace MotorCombat.Tests
             Assert.IsFalse(result.killed);
             Assert.IsFalse(state.IsDestroyed);
         }
+
+        [Test]
+        public void Revive_RestoresFullHealthAfterDeath()
+        {
+            var state = new HealthState(1000f);
+            Hit(state, Flat(5000f));
+
+            state.Revive();
+
+            Assert.AreEqual(1000f, state.Current);
+            Assert.IsFalse(state.IsDestroyed);
+            Assert.AreEqual(DamageOutcome.Applied, Hit(state, Flat(100f)).outcome);
+            Assert.AreEqual(900f, state.Current, 1e-4f);
+        }
+
+        [Test]
+        public void Revive_KeepsGates()
+        {
+            var state = new HealthState(1000f);
+            state.AddGate(new object(), r => true);
+
+            state.Revive();
+
+            Assert.AreEqual(DamageOutcome.Blocked, Hit(state, Flat(100f)).outcome);
+        }
     }
 }

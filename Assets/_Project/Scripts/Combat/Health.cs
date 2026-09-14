@@ -10,7 +10,7 @@ namespace MotorCombat.Combat
     /// the killing hit turns the car into a wreck.
     /// </summary>
     [RequireComponent(typeof(CarController))]
-    public class Health : MonoBehaviour, IDamageable
+    public class Health : MonoBehaviour, IDamageable, IRespawnable
     {
         /// <summary>Source key for the wreck's untimed ability block.</summary>
         public static readonly object WreckBlock = new object();
@@ -37,6 +37,19 @@ namespace MotorCombat.Combat
 
         public void AddGate(object source, Func<DamageRequest, bool> blocks) => State.AddGate(source, blocks);
         public void RemoveGate(object source) => State.RemoveGate(source);
+
+        /// <summary>
+        /// Revives the car: drops the wreck block and anything else blocked or
+        /// modified, and refills health. Effects end their own state through
+        /// CarEffects' own reset.
+        /// </summary>
+        public void ResetForRespawn()
+        {
+            CarController car = Car;
+            car.Abilities.UnblockAll();
+            car.Stats.RemoveAll();
+            State.Revive();
+        }
 
         public DamageResult Apply(in DamageRequest request)
         {

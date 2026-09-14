@@ -43,6 +43,16 @@ namespace MotorCombat.Combat
             }
         }
 
+        /// <summary>
+        /// Back to full health and alive. Gates stay: each belongs to its
+        /// source (for example Armored), which removes it itself.
+        /// </summary>
+        public void Revive()
+        {
+            Current = Max;
+            IsDestroyed = false;
+        }
+
         public DamageResult Apply(in DamageRequest request, bool targetable, bool hostile, float sourceAttack, float targetDefense)
         {
             if (!targetable || IsDestroyed) return DamageResult.Of(DamageOutcome.NotTargetable);

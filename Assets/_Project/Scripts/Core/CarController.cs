@@ -71,6 +71,16 @@ namespace MotorCombat.Core
             _input = provider;
         }
 
+        /// <summary>
+        /// Zeroes the pre-step velocity snapshot. Called on respawn or teleport,
+        /// so a ram in the next step never reads motion from before the jump.
+        /// </summary>
+        public void ClearMotionSnapshot()
+        {
+            PreStepVelocity = Vector3.zero;
+            PreStepAngularVelocity = Vector3.zero;
+        }
+
         void OnEnable()
         {
             CarRegistry.Register(this);

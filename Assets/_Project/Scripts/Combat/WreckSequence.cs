@@ -12,11 +12,11 @@ namespace MotorCombat.Combat
     /// deactivates the car.
     ///
     /// Visual only: the physics box stays flat and keeps sliding to a stop.
-    /// On removal the original materials, transforms and colours are put back,
-    /// so a future respawn only has to reactivate the car.
+    /// On removal, on disable and on respawn the original materials, transforms and colours are put back,
+    /// so a respawned car looks as it did before death.
     /// </summary>
     [RequireComponent(typeof(Health))]
-    public class WreckSequence : MonoBehaviour
+    public class WreckSequence : MonoBehaviour, IRespawnable
     {
         static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
 
@@ -74,6 +74,24 @@ namespace MotorCombat.Combat
         void OnDestroy()
         {
             if (_health != null) _health.Destroyed -= OnDestroyedByDamage;
+            RestoreVisuals();
+        }
+
+        void OnDisable()
+        {
+            // A car switched off mid-roll must not resume the roll against
+            // live visuals when it is switched back on.
+            StopAndRestore();
+        }
+
+        public void ResetForRespawn()
+        {
+            StopAndRestore();
+        }
+
+        void StopAndRestore()
+        {
+            _running = false;
             RestoreVisuals();
         }
 

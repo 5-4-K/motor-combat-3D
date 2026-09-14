@@ -130,5 +130,21 @@ namespace MotorCombat.Tests
             Assert.IsFalse(_target.Abilities.Has(CarAbility.Targetable));
             Assert.IsFalse(_target.Abilities.Has(CarAbility.Throttle));
         }
+
+        [Test]
+        public void ResetForRespawn_RevivesTheWreckAndClearsItsBlocksAndModifiers()
+        {
+            _health.Apply(Flat(5000f, _source));
+            _target.Stats.SetBase(CarStat.Defense, 100f);
+            _target.Stats.Add(new object(), CarStat.Defense, 50f);
+
+            _health.ResetForRespawn();
+
+            Assert.IsFalse(_health.IsDestroyed);
+            Assert.AreEqual(1000f, _health.Current);
+            Assert.IsTrue(_target.Abilities.Has(CarAbility.Throttle | CarAbility.Steer | CarAbility.Fire | CarAbility.Ram | CarAbility.Targetable));
+            Assert.AreEqual(100f, _target.Stats.Effective(CarStat.Defense), 1e-4f);
+            Assert.AreEqual(DamageOutcome.Applied, _health.Apply(Flat(100f, _source)).outcome);
+        }
     }
 }
