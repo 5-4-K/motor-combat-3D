@@ -85,6 +85,10 @@ namespace MotorCombat.Bootstrap
             var selfEffects = hud.gameObject.AddComponent<SelfEffectsWidget>();
             selfEffects.viewer = player;
             selfEffects.Build(hud.Rect);
+
+            var weaponSlots = hud.gameObject.AddComponent<WeaponSlotsWidget>();
+            weaponSlots.viewer = player;
+            weaponSlots.Build(hud.Rect);
         }
 
         bool Validate()
@@ -97,6 +101,7 @@ namespace MotorCombat.Bootstrap
             if (carDefinition.ramConfig == null) { Debug.LogError("[MotorCombat] CarDefinition.ramConfig is not assigned."); return false; }
             if (carDefinition.wreckConfig == null) { Debug.LogError("[MotorCombat] CarDefinition.wreckConfig is not assigned."); return false; }
             if (carDefinition.effectsConfig == null) { Debug.LogError("[MotorCombat] CarDefinition.effectsConfig is not assigned."); return false; }
+            if (carDefinition.weaponsConfig == null) { Debug.LogError("[MotorCombat] CarDefinition.weaponsConfig is not assigned."); return false; }
             if (cameraRig == null) { Debug.LogError("[MotorCombat] GameBootstrap.cameraRig is not assigned."); return false; }
             if (cameraRig.config == null) { Debug.LogError("[MotorCombat] CameraRig.config is not assigned."); return false; }
             return true;
