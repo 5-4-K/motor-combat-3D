@@ -105,5 +105,19 @@ namespace MotorCombat.Tests
 
             Assert.AreEqual(1f, stats.Effective(CarStat.Strength), 1e-6f);
         }
+
+        [Test]
+        public void Has_ReportsWhetherASourceHasModifiers()
+        {
+            var stats = new CarStats();
+            stats.SetBase(CarStat.Defense, 100f);
+
+            Assert.IsFalse(stats.Has(Corroded));
+
+            stats.Add(Corroded, CarStat.Defense, -30f);
+
+            Assert.IsTrue(stats.Has(Corroded));
+            Assert.IsFalse(stats.Has(Fortified));
+        }
     }
 }

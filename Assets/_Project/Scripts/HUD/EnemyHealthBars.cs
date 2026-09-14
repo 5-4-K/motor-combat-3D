@@ -23,7 +23,7 @@ namespace MotorCombat.HUD
         [Tooltip("Reference pixels.")] public float maxWidth = 160f;
         [Tooltip("Reference pixels.")] public float barHeight = 8f;
         public int fontSize = 14;
-        [Tooltip("Screen pixels beyond the edge before a bar is hidden.")] public float screenMargin = 100f;
+        [Tooltip("Reference pixels beyond the edge before a bar is hidden.")] public float screenMargin = 100f;
 
         static readonly Color Track = new Color(0.12f, 0.02f, 0.02f, 0.85f);
         static readonly Color FillColour = new Color(0.88f, 0.25f, 0.23f);
@@ -76,7 +76,9 @@ namespace MotorCombat.HUD
 
                     Vector3 anchor = car.transform.position + Vector3.up * (carHeight * 0.5f + anchorMarginMetres);
                     Vector3 screen = view.WorldToScreenPoint(anchor);
-                    if (!HealthBarLayout.IsVisible(screen, Screen.width, Screen.height, screenMargin)) continue;
+                    // screenMargin is reference pixels, so convert to screen pixels before
+                    // comparing — otherwise the pop-out point depends on the display's resolution.
+                    if (!HealthBarLayout.IsVisible(screen, Screen.width, Screen.height, screenMargin * scale)) continue;
 
                     Vector3 halfSpan = view.transform.right * (carWidth * 0.5f);
                     Vector3 left = view.WorldToScreenPoint(anchor - halfSpan);

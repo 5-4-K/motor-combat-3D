@@ -61,15 +61,21 @@ namespace MotorCombat.Combat
                 healthAfter = State.Current
             };
 
+            if (result.killed)
+            {
+                // The car must become a wreck even if a Damaged subscriber
+                // throws, so this runs before Damaged fires rather than
+                // after. A wreck carries nothing over: ram lock, reel and
+                // every effect end. Event order is still Damaged → Destroyed.
+                car.Abilities.UnblockAll();
+                car.Stats.RemoveAll();
+                car.Abilities.Block(WreckBlock, WreckMask, float.PositiveInfinity, BlockRefresh.KeepLonger);
+            }
+
             Damaged?.Invoke(report);
 
             if (result.killed)
             {
-                // A wreck carries nothing over: ram lock, reel and every effect end.
-                car.Abilities.UnblockAll();
-                car.Stats.RemoveAll();
-                car.Abilities.Block(WreckBlock, WreckMask, float.PositiveInfinity, BlockRefresh.KeepLonger);
-
                 Destroyed?.Invoke(report);
             }
 

@@ -61,7 +61,10 @@ namespace MotorCombat.Core
             public float remaining;
         }
 
-        readonly Dictionary<object, Entry> _blocks = new Dictionary<object, Entry>();
+        // Keyed by reference identity: a boxed value or string source with
+        // equal content but a different instance must never match another
+        // source's block. See ReferenceKeyComparer.
+        readonly Dictionary<object, Entry> _blocks = new Dictionary<object, Entry>(ReferenceKeyComparer.Instance);
         readonly List<object> _keys = new List<object>();
 
         /// <param name="seconds">Duration; <see cref="float.PositiveInfinity"/> for an untimed block. A new block of zero or less is ignored.</param>

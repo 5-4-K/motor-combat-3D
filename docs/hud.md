@@ -52,16 +52,13 @@ Excluded on purpose, addable later as new widgets without touching this code:
 - Floating damage numbers.
 - A damage-chip trail.
 
-A few smaller limitations worth knowing:
+A smaller limitation worth knowing: a destroyed car's bar is removed from view, but its entry
+in `EnemyHealthBars`'s internal dictionary stays until the car's `GameObject` is actually
+destroyed — there's no respawn yet to exercise reactivating it.
 
-- Visibility is judged purely by a margin in **screen pixels** (`screenMargin`), not by any
-  world-space distance or occlusion check.
-- A destroyed car's bar is removed from view, but its entry in `EnemyHealthBars`'s internal
-  dictionary stays until the car's `GameObject` is actually destroyed — there's no respawn yet
-  to exercise reactivating it.
-- `Health.Damaged`/`Destroyed` are plain C# events with no per-subscriber isolation: a
-  subscriber that throws would stop `Health.Apply` before the wreck's own block runs, leaving
-  the car undestroyed despite reaching 0 HP.
+`screenMargin` is in **reference pixels**: it is converted to screen pixels via the canvas
+scale factor before the visibility check, so the pop-out point is resolution-independent
+rather than a fixed number of physical pixels.
 
 ## Tests
 

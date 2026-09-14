@@ -71,5 +71,28 @@ namespace MotorCombat.Tests
 
             Assert.IsTrue(schedule.TryTick(Zone, Car, now, 0.5f));
         }
+
+        /// <summary>
+        /// Two distinct targets with equal content (never a literal, so CLR
+        /// interning can't hide a bug) must tick independently — the key
+        /// compares by reference identity, not by value.
+        /// </summary>
+        [Test]
+        public void Keys_AreComparedByIdentity()
+        {
+            string targetA = new string(new[] { 't', 'a', 'r', 'g', 'e', 't' });
+            string targetB = new string(new[] { 't', 'a', 'r', 'g', 'e', 't' });
+            Assert.AreNotSame(targetA, targetB);
+            Assert.AreEqual(targetA, targetB);
+
+            var schedule = new TickSchedule();
+            Assert.IsTrue(schedule.TryTick(Zone, targetA, 0f, 0.5f));
+
+            // targetB is a different instance, so it has never ticked.
+            Assert.IsTrue(schedule.TryTick(Zone, targetB, 0.1f, 0.5f));
+
+            // targetA already ticked at 0, so it is not due again yet.
+            Assert.IsFalse(schedule.TryTick(Zone, targetA, 0.2f, 0.5f));
+        }
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using NUnit.Framework;
 using UnityEngine;
 using MotorCombat.Core;
@@ -34,8 +35,8 @@ namespace MotorCombat.Tests
         [TearDown]
         public void TearDown()
         {
-            Object.DestroyImmediate(_sourceObject);
-            Object.DestroyImmediate(_targetObject);
+            UnityEngine.Object.DestroyImmediate(_sourceObject);
+            UnityEngine.Object.DestroyImmediate(_targetObject);
         }
 
         DamageRequest Flat(float amount, CarController source)
@@ -112,6 +113,22 @@ namespace MotorCombat.Tests
 
             Assert.IsTrue(_target.Abilities.Has(CarAbility.YawHold | CarAbility.Grip));
             Assert.AreEqual(100f, _target.Stats.Effective(CarStat.Defense), 1e-4f);
+        }
+
+        /// <summary>
+        /// The wreck block is applied before Damaged fires (see Apply), so a
+        /// throwing subscriber still leaves the car destroyed. Apply itself
+        /// re-throws — it does not swallow the subscriber's exception.
+        /// </summary>
+        [Test]
+        public void Kill_WrecksTheCarEvenIfADamagedSubscriberThrows()
+        {
+            _health.Damaged += r => throw new InvalidOperationException();
+
+            Assert.Throws<InvalidOperationException>(() => _health.Apply(Flat(5000f, _source)));
+
+            Assert.IsFalse(_target.Abilities.Has(CarAbility.Targetable));
+            Assert.IsFalse(_target.Abilities.Has(CarAbility.Throttle));
         }
     }
 }

@@ -208,8 +208,8 @@ looked like.
 
 ## Tests
 
-`RamRulesTests` — 37 tests covering every region including corner-band edges, attack
-regions, each type including the 45° boundary on both sides, every `Resolve` case from
+`RamRulesTests` — 37 tests covering every region including corner-band edges,
+attacker-qualifying regions, each type including the 45° boundary on both sides, every `Resolve` case from
 §1.4, shove magnitude and the resistance clamp, damage (`DamageFor`), and spin (zero through
 the centre, sign, linearity in `spinScale`, timestep-independent decay).
 

@@ -67,7 +67,7 @@ zones (sub-projects 2–6) are built entirely by calling into Core, not by chang
 
 Each module is a MonoBehaviour that reads config, calls a static pure function, and writes
 the result to the Rigidbody. The maths lives in `DrivePhysics` and `AimMath` — no
-`GameObject`, no scene, testable directly. This is why 202 EditMode tests run in under a
+`GameObject`, no scene, testable directly. This is why 206 EditMode tests run in under a
 second with nothing instantiated.
 
 When adding a module, put the decision in a pure static and keep the MonoBehaviour dumb.
@@ -131,7 +131,7 @@ fire entry point, reading `CarController.AimDirection`, that no-ops. It exists s
 implementing weapons means filling in a body rather than re-architecting.
 
 Ramming was the other seam; it is now built — see [ramming.md](ramming.md). It reaches
-driving only through `CarController.Status`, so the two assemblies still never reference
+driving only through `CarController.Abilities`, so the two assemblies still never reference
 each other.
 
 ## Scene composition

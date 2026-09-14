@@ -96,5 +96,15 @@ namespace MotorCombat.Core
         {
             _modifiers.Clear();
         }
+
+        /// <summary>True when this source has registered a modifier on any stat, by reference identity.</summary>
+        public bool Has(object source)
+        {
+            for (int i = 0; i < _modifiers.Count; i++)
+            {
+                if (ReferenceEquals(_modifiers[i].source, source)) return true;
+            }
+            return false;
+        }
     }
 }

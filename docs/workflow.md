@@ -47,7 +47,7 @@ is rejected with *"conflicts with a reserved Unity flag managed by this command.
 
 ## Tests
 
-202 EditMode tests, sub-second. Nearly all test pure statics; `CarFactoryTests` builds throwaway GameObjects but loads no scene.
+206 EditMode tests, sub-second. Nearly all test pure statics; `CarFactoryTests` builds throwaway GameObjects but loads no scene.
 
 | Fixture | Count |
 |---|---|
@@ -60,18 +60,19 @@ is rejected with *"conflicts with a reserved Unity flag managed by this command.
 | `ArenaBuilderTests` | 7 |
 | `RamRulesTests` | 37 |
 | `CarAbilitiesTests` | 15 |
-| `CarStatsTests` | 9 |
+| `CarStatsTests` | 10 |
 | `DamageRulesTests` | 9 |
 | `HealthStateTests` | 13 |
-| `TickScheduleTests` | 7 |
+| `TickScheduleTests` | 8 |
 | `HostilityTests` | 4 |
-| `HealthTests` | 5 |
+| `HealthTests` | 6 |
 | `PhysicsLayersTests` | 3 |
 | `WreckMathTests` | 11 |
 | `WreckMaterialsTests` | 1 |
 | `HealthBarLayoutTests` | 7 |
 | `HudRootTests` | 1 |
 | `CarRegistryTests` | 3 |
+| `SourceKeyIdentityTests` | 1 |
 
 The test assembly carries the `UNITY_INCLUDE_TESTS` define constraint, so tests never ship
 in a player build.

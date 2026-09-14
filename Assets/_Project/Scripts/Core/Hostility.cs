@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 namespace MotorCombat.Core
 {
@@ -11,6 +12,12 @@ namespace MotorCombat.Core
         static readonly Func<CarController, CarController, bool> DefaultRule = (a, b) => a != b;
 
         static Func<CarController, CarController, bool> _rule = DefaultRule;
+
+        // Domain reload is disabled for this project, so a static field set by
+        // a previous play session (e.g. a test's SetRule) would otherwise
+        // still be sitting there the next time play mode starts.
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetOnLoad() => ResetRule();
 
         /// <summary>True when either car is null (the environment hurts everyone), otherwise the current rule.</summary>
         public static bool AreEnemies(CarController a, CarController b)

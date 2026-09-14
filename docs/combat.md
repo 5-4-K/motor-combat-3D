@@ -5,6 +5,19 @@ destruction sequence. Rams are the only damage source today; projectiles, zones,
 effects (later sub-projects) plug into the same `DamageRequest`, `CarStats`, `CarAbilities`
 and `Hostility` seams without editing any of the code this page describes.
 
+## Source keys
+
+Ability blocks (`CarAbilities`), stat modifiers (`CarStats`), damage gates (`HealthState`)
+and the tick schedule (`TickSchedule`) all key their state off a caller-supplied `object
+source`. All four compare that key by **object identity** (`ReferenceEquals`), never by
+value — so a boxed value or a `string` built at runtime with the same content as another
+key is still a different source. An effect should use **one object** as its key across all
+three of a block, a modifier and a gate, so `Unblock`/`Remove`/`RemoveGate` (and, for a
+periodic effect, `TickSchedule`'s `source`) all target exactly the state that same instance
+registered. `CarAbilities` and `TickSchedule` key `Dictionary`s with `ReferenceKeyComparer`
+(Core) rather than the default comparer, which for a `string` key would otherwise compare
+content; `CarStats` and `HealthState` already compared explicitly with `ReferenceEquals`.
+
 ## Stats
 
 ### Per car (`CarDefinition`)
@@ -31,6 +44,7 @@ Percentages from **different sources add** — Corroded −30% and Fortified +20
 100 give −10%, so 90, regardless of application order. The **same source on the same stat
 replaces** its previous percentage rather than stacking with itself. `Remove(source)` clears
 every modifier that source registered, on every stat; `RemoveAll()` clears everything.
+`Has(source)` reports whether that source currently has a modifier on any stat.
 
 `CarStat` also carries `TopSpeed`, base **1**, a pure multiplier with no matching
 `CarDefinition` field. `DrivingModule` multiplies `enginePower` by `Stats.Effective(CarStat.TopSpeed)`,
@@ -142,9 +156,14 @@ Ram lock, reel and the wreck are all just blocks:
 
 The moment `Health.Apply` takes current HP to 0, `Health` unblocks and clears everything the
 car was carrying — `car.Abilities.UnblockAll()` and `car.Stats.RemoveAll()`, ending any ram
-lock, reel or (later) effect — then adds the untimed wreck block from the table above. Grip and
-`YawHold` are not in that mask, so the wreck keeps sliding to a stop under normal drag and grip
-without spinning.
+lock, reel or (later) effect — then adds the untimed wreck block from the table above, **before**
+`Damaged` fires. This ordering is deliberate: the car becomes a wreck even if a `Damaged`
+subscriber throws, since the block is already in place by the time any subscriber runs. Event
+order is still `Damaged` → `Destroyed`. On a killing ram specifically, `Health.Destroyed` fires
+before `RammingModule.Rammed` — `RammingModule.ApplyRam` calls `IDamageable.Apply` (which raises
+both `Health` events synchronously) before it reports the ram and raises `Rammed`. Grip and
+`YawHold` are not in the wreck mask, so the wreck keeps sliding to a stop under normal drag and
+grip without spinning.
 
 `WreckSequence.OnDestroyedByDamage` (subscribed to `Health.Destroyed`) then moves the car root
 to physics layer **`Wreck`**, which collides only with **`Arena`** — the wreck passes through
@@ -180,8 +199,19 @@ transparency avoids a visible pop at the moment of death.
 **Visuals restored on removal.** When the wreck deactivates (or the component is destroyed),
 every rolled transform, faded colour and swapped material list — including each renderer's
 original `shadowCastingMode` — is restored to what it was before death, and the transparent
-clones are destroyed. A future respawn can simply reactivate the car; `WreckSequence` needs no
-change.
+clones are destroyed.
+
+**Respawn is not built.** Reactivating the car GameObject is not enough on its own. A future
+respawn will also need:
+
+- The root moved back to the `Car` physics layer — `WreckSequence` moves it to `Wreck` but
+  never moves it back.
+- A `HealthState`/`Health` reset — there is no way today to set `Current` back to `Max`.
+- `Health.WreckBlock` unblocked — the untimed `Throttle | Steer | Fire | Ram | Targetable`
+  block otherwise survives reactivation.
+- `WreckSequence` stopped or restored if the car is deactivated mid-sequence — it has no
+  `OnDisable`, so a respawn that reactivates the car while the roll/fade coroutine is still
+  running would resume it against restored (live) visuals.
 
 **Debug hooks.** `Health` carries two Editor-only `[ContextMenu]` entries — "Debug: take 25%
 max HP" and "Debug: destroy" — so damage and death can be tested from the Inspector while every
@@ -210,17 +240,27 @@ keeps Unity's defaults. The names live in `ProjectSettings/TagManager.asset`. La
 sub-projects add their own layers (projectiles, obstacles, zones) beside these three without
 touching them.
 
+**A later layer that should touch wrecks must re-enable that pair itself.**
+`ConfigureCollisions()` loops every layer **index** 0–31 and calls
+`Physics.IgnoreLayerCollision(wreck, layer, layer != arena)` — so every index is excluded from
+`Wreck` at boot, including ones with no name yet assigned. A layer a later sub-project adds
+(say, a projectile layer that should still hit a wreck) inherits that exclusion the moment it
+takes an index, since the setting is per index-pair, not per name; it must call
+`Physics.IgnoreLayerCollision(PhysicsLayers.Wreck, thatLayer, false)` after
+`ConfigureCollisions()` runs to opt back in.
+
 ## Tests
 
 | Fixture | Count |
 |---|---|
 | `CarAbilitiesTests` | 15 |
-| `CarStatsTests` | 9 |
+| `CarStatsTests` | 10 |
 | `DamageRulesTests` | 9 |
 | `HealthStateTests` | 13 |
-| `TickScheduleTests` | 7 |
+| `TickScheduleTests` | 8 |
 | `HostilityTests` | 4 |
-| `HealthTests` | 5 |
+| `HealthTests` | 6 |
 | `PhysicsLayersTests` | 3 |
 | `WreckMathTests` | 11 |
 | `WreckMaterialsTests` | 1 |
+| `SourceKeyIdentityTests` | 1 |
