@@ -5,6 +5,14 @@ namespace MotorCombat.Combat
     /// <summary>Pure timing and geometry for the wreck roll and fade.</summary>
     public static class WreckMath
     {
+        /// <summary>
+        /// Fade alpha below which the wreck stops casting a shadow. The car
+        /// fades out; a solid shadow under an invisible car reads as a bug.
+        /// Cutting the shadow mid-fade, rather than waiting for full
+        /// transparency, avoids a visible pop at the moment of death.
+        /// </summary>
+        public const float ShadowCutoffAlpha = 0.5f;
+
         /// <summary>Eased roll angle in degrees at <paramref name="elapsed"/> seconds.</summary>
         public static float RollAngle(float elapsed, float rollSeconds, float rollDegrees)
         {
@@ -29,5 +37,8 @@ namespace MotorCombat.Combat
         {
             return fadeSeconds > 0f ? 1f - Mathf.Clamp01(elapsed / fadeSeconds) : 0f;
         }
+
+        /// <summary>Whether the wreck should still cast a shadow at this fade alpha.</summary>
+        public static bool CastsShadow(float alpha) => alpha >= ShadowCutoffAlpha;
     }
 }

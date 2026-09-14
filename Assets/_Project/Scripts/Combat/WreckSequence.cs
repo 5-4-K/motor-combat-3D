@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering;
 using MotorCombat.Core;
 
 namespace MotorCombat.Combat
@@ -39,6 +40,7 @@ namespace MotorCombat.Combat
         {
             public Renderer renderer;
             public Material[] original;
+            public ShadowCastingMode shadowCastingMode;
         }
 
         readonly List<Rolled> _rolled = new List<Rolled>();
@@ -52,6 +54,7 @@ namespace MotorCombat.Combat
         float _halfWidth;
         float _halfHeight;
         bool _running;
+        bool _shadowsOff;
 
         void Awake()
         {
@@ -91,6 +94,7 @@ namespace MotorCombat.Combat
 
             CaptureVisuals();
             _elapsed = 0f;
+            _shadowsOff = false;
             _running = true;
         }
 
@@ -125,6 +129,14 @@ namespace MotorCombat.Combat
                 colour.a *= alpha;
                 _block.SetColor(BaseColorId, colour);
                 faded.renderer.SetPropertyBlock(_block, faded.index);
+            }
+
+            // Once, not every frame: a solid shadow under a near-invisible car
+            // reads as a bug, so drop it as soon as the fade crosses the cutoff.
+            if (!_shadowsOff && !WreckMath.CastsShadow(alpha))
+            {
+                SetShadowsOff();
+                _shadowsOff = true;
             }
 
             if (_elapsed >= config.removeAfterSeconds)
@@ -171,8 +183,16 @@ namespace MotorCombat.Combat
                     _faded.Add(new Faded { renderer = renderer, index = i, colour = colour });
                 }
 
-                _swapped.Add(new Swapped { renderer = renderer, original = original });
+                _swapped.Add(new Swapped { renderer = renderer, original = original, shadowCastingMode = renderer.shadowCastingMode });
                 renderer.sharedMaterials = copies;
+            }
+        }
+
+        void SetShadowsOff()
+        {
+            for (int i = 0; i < _swapped.Count; i++)
+            {
+                if (_swapped[i].renderer != null) _swapped[i].renderer.shadowCastingMode = ShadowCastingMode.Off;
             }
         }
 
@@ -199,7 +219,9 @@ namespace MotorCombat.Combat
 
             for (int i = 0; i < _swapped.Count; i++)
             {
-                if (_swapped[i].renderer != null) _swapped[i].renderer.sharedMaterials = _swapped[i].original;
+                if (_swapped[i].renderer == null) continue;
+                _swapped[i].renderer.sharedMaterials = _swapped[i].original;
+                _swapped[i].renderer.shadowCastingMode = _swapped[i].shadowCastingMode;
             }
 
             for (int i = 0; i < _clones.Count; i++)

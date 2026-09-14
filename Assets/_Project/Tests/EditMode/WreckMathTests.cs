@@ -44,5 +44,14 @@ namespace MotorCombat.Tests
 
         [Test]
         public void Alpha_ZeroDurationIsInvisible() => Assert.AreEqual(0f, WreckMath.Alpha(0f, 0f), 1e-4f);
+
+        [Test]
+        public void CastsShadow_StopsBelowHalfAlpha()
+        {
+            Assert.IsTrue(WreckMath.CastsShadow(1f));
+            Assert.IsTrue(WreckMath.CastsShadow(0.5f));
+            Assert.IsFalse(WreckMath.CastsShadow(0.49f));
+            Assert.IsFalse(WreckMath.CastsShadow(0f));
+        }
     }
 }
