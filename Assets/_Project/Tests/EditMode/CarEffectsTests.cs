@@ -113,6 +113,18 @@ namespace MotorCombat.Tests
         }
 
         [Test]
+        public void Ended_IsRaisedWhenAnEffectExpires()
+        {
+            var ended = new List<EffectType>();
+            _effects.Ended += ended.Add;
+
+            Apply(EffectType.Suppressed, duration: 1f);
+            StepTo(1f, 1f);
+
+            CollectionAssert.AreEqual(new[] { EffectType.Suppressed }, ended);
+        }
+
+        [Test]
         public void Suppressed_BlocksOnlyFire()
         {
             Apply(EffectType.Suppressed);
@@ -240,6 +252,54 @@ namespace MotorCombat.Tests
             StepTo(1f, 1f);
 
             Assert.AreEqual(1000f, _health.Current, 1e-3f);
+        }
+
+        [Test]
+        public void Overheated_ReappliedWhileStacking_KeepsItsRhythm()
+        {
+            _config.overheatedStacks = true;
+
+            Apply(EffectType.Overheated, magnitude: 10f, duration: 3f);
+            Assert.AreEqual(990f, _health.Current, 1e-3f);
+
+            StepTo(0.5f, 0.5f);
+            Assert.AreEqual(EffectOutcome.Restarted, Apply(EffectType.Overheated, magnitude: 10f, duration: 3f));
+            Assert.AreEqual(990f, _health.Current, 1e-3f, "restacking mid-interval does not tick early");
+
+            StepTo(0.5f, 1f);
+            Assert.AreEqual(980f, _health.Current, 1e-3f);
+        }
+
+        // --- End (only the copy this source applied) ---------------------------
+
+        [Test]
+        public void End_RemovesTheCopyThisSourceApplied()
+        {
+            _car.Stats.SetBase(CarStat.Defense, 100f);
+            var ended = new List<EffectType>();
+            _effects.Ended += ended.Add;
+
+            Apply(EffectType.Corroded, magnitude: 30f, duration: 3f);
+
+            Assert.IsTrue(_effects.End(EffectType.Corroded, _source));
+            Assert.IsFalse(_effects.Has(EffectType.Corroded));
+            Assert.AreEqual(100f, _car.Stats.Effective(CarStat.Defense), 1e-3f);
+            CollectionAssert.AreEqual(new[] { EffectType.Corroded }, ended);
+        }
+
+        [Test]
+        public void End_FromAnotherSource_LeavesTheEffectRunning()
+        {
+            Apply(EffectType.Corroded, magnitude: 30f, duration: 3f);
+
+            Assert.IsFalse(_effects.End(EffectType.Corroded, _car));
+            Assert.IsTrue(_effects.Has(EffectType.Corroded));
+        }
+
+        [Test]
+        public void End_WhenNotActive_ReturnsFalse()
+        {
+            Assert.IsFalse(_effects.End(EffectType.Corroded, _source));
         }
 
         // --- Stacking, cleanse, rejections --------------------------------------

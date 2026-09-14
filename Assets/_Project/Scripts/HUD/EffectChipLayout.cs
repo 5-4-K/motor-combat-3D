@@ -43,20 +43,35 @@ namespace MotorCombat.HUD
             }
         }
 
+        /// <summary>DisplayedTenths' result for an untimed (infinite) effect — no digit to show.</summary>
+        public const int Untimed = int.MinValue;
+
         /// <summary>
-        /// "STUN 1.2s". Rounded UP to tenths so a chip never reads 0.0s while
-        /// the effect is still on; invariant culture so it never reads "1,2s".
-        /// An untimed effect shows only its label.
+        /// Remaining time rounded UP to whole tenths of a second (1.2s → 12), so a chip
+        /// never reads 0.0s while the effect is still on. As an int rather than a
+        /// formatted string so a caller (EffectChipRow) can compare it every step
+        /// without allocating. <see cref="Untimed"/> for an infinite duration.
+        /// </summary>
+        public static int DisplayedTenths(float remaining)
+        {
+            if (float.IsInfinity(remaining)) return Untimed;
+
+            // The small offset stops float noise (1.2 × 10 = 12.0000005) rounding up a whole tenth.
+            float tenths = Mathf.Ceil(remaining * 10f - 1e-3f);
+            if (!(tenths > 0f)) tenths = 0f;   // also turns −0 and NaN into 0
+            return (int)tenths;
+        }
+
+        /// <summary>
+        /// "STUN 1.2s", invariant culture so it never reads "1,2s". An untimed effect
+        /// shows only its label.
         /// </summary>
         public static string Text(EffectType type, float remaining)
         {
-            if (float.IsInfinity(remaining)) return Label(type);
+            int tenths = DisplayedTenths(remaining);
+            if (tenths == Untimed) return Label(type);
 
-            // The small offset stops float noise (1.2 × 10 = 12.0000005) rounding up a whole tenth.
-            float tenths = Mathf.Ceil(remaining * 10f - 1e-3f) / 10f;
-            if (!(tenths > 0f)) tenths = 0f;   // also turns −0 and NaN into 0
-
-            return Label(type) + " " + tenths.ToString("0.0", CultureInfo.InvariantCulture) + "s";
+            return Label(type) + " " + (tenths / 10f).ToString("0.0", CultureInfo.InvariantCulture) + "s";
         }
 
         /// <summary>X offset of chip <paramref name="index"/> in a row of <paramref name="count"/> centred on 0.</summary>

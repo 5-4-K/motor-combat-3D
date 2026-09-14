@@ -20,6 +20,12 @@ namespace MotorCombat.HUD
             public Image background;
             public Text label;
             public string text;
+
+            // What the label was last built from, so a countdown that hasn't
+            // crossed a tenth yet doesn't allocate a new string every step.
+            public bool hasText;
+            public EffectType lastType;
+            public int lastTenths;
         }
 
         readonly List<Chip> _chips = new List<Chip>();
@@ -69,11 +75,14 @@ namespace MotorCombat.HUD
                 chip.root.anchoredPosition = new Vector2(EffectChipLayout.RowX(i, count, _chipWidth, _gap), 0f);
                 chip.background.color = EffectChipLayout.Colour(effect.type);
 
-                string text = EffectChipLayout.Text(effect.type, effect.remaining);
-                if (text != chip.text)
+                int tenths = EffectChipLayout.DisplayedTenths(effect.remaining);
+                if (!chip.hasText || effect.type != chip.lastType || tenths != chip.lastTenths)
                 {
-                    chip.text = text;
-                    chip.label.text = text;
+                    chip.hasText = true;
+                    chip.lastType = effect.type;
+                    chip.lastTenths = tenths;
+                    chip.text = EffectChipLayout.Text(effect.type, effect.remaining);
+                    chip.label.text = chip.text;
                 }
             }
 

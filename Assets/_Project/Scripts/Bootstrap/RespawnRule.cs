@@ -28,6 +28,7 @@ namespace MotorCombat.Bootstrap
         }
 
         readonly List<Entry> _entries = new List<Entry>();
+        bool _loggedMissingCarLayer;
 
         void Start()
         {
@@ -86,6 +87,19 @@ namespace MotorCombat.Bootstrap
 
         bool IsClear(Entry entry)
         {
+            // The dead car is inactive, so it never blocks its own spot. Wrecks
+            // sit on the Wreck layer and phase through cars anyway.
+            int carLayer = PhysicsLayers.Car;
+            if (carLayer < 0)
+            {
+                if (!_loggedMissingCarLayer)
+                {
+                    _loggedMissingCarLayer = true;
+                    Debug.LogError($"[MotorCombat] RespawnRule on '{name}' cannot check for a clear spawn point: the Car physics layer is missing — skipping the check and respawning anyway.", this);
+                }
+                return true;
+            }
+
             var box = entry.car.GetComponent<BoxCollider>();
             Vector3 size = box != null ? box.size : Vector3.one;
             Vector3 offset = box != null ? box.center : Vector3.zero;
@@ -93,11 +107,7 @@ namespace MotorCombat.Bootstrap
             RespawnRules.SpawnBox(entry.position, entry.rotation, offset, size, config.clearanceMargin,
                 out Vector3 center, out Vector3 halfExtents);
 
-            // The dead car is inactive, so it never blocks its own spot. Wrecks
-            // sit on the Wreck layer and phase through cars anyway.
-            int carLayer = PhysicsLayers.Car;
-            int mask = carLayer >= 0 ? 1 << carLayer : Physics.DefaultRaycastLayers;
-            return !Physics.CheckBox(center, halfExtents, entry.rotation, mask, QueryTriggerInteraction.Ignore);
+            return !Physics.CheckBox(center, halfExtents, entry.rotation, 1 << carLayer, QueryTriggerInteraction.Ignore);
         }
     }
 }

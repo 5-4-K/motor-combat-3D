@@ -17,6 +17,14 @@ namespace MotorCombat.Core
         /// <summary>Seconds left, or 0 when the effect is not active.</summary>
         float Remaining(EffectType type);
 
+        /// <summary>
+        /// Ends the effect early, but only the copy <paramref name="source"/> applied —
+        /// effects don't stack, so the active copy may belong to someone else, whose
+        /// effect must run its full time. Matching is by reference; a null source
+        /// matches only a copy applied with a null source. True if it ended.
+        /// </summary>
+        bool End(EffectType type, CarController source);
+
         /// <summary>Clears the list, then fills it with every active effect in EffectType order.</summary>
         void GetActive(List<ActiveEffect> into);
 

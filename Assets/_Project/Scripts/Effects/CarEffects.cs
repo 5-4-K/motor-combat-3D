@@ -162,6 +162,16 @@ namespace MotorCombat.Effects
             return _set.Remaining(type);
         }
 
+        public bool End(EffectType type, CarController source)
+        {
+            if (!_set.TryGet(type, out EffectSet.Entry entry)) return false;
+            if (!ReferenceEquals(entry.source, source)) return false;
+
+            if (!_set.Remove(type)) return false;
+            NotifyEnded(type);
+            return true;
+        }
+
         public void GetActive(List<ActiveEffect> into)
         {
             if (into == null) throw new ArgumentNullException(nameof(into));

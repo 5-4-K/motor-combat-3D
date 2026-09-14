@@ -25,7 +25,7 @@ namespace MotorCombat.Effects
 
         public override void OnEnd(EffectHost host)
         {
-            host.Ticks.Forget(host.Car);
+            host.Ticks.Forget(this, host.Car);
         }
 
         void TryTick(EffectHost host, in EffectSet.Entry entry)

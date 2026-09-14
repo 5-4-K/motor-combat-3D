@@ -16,6 +16,7 @@ namespace MotorCombat.Tests
             public EffectOutcome Apply(in EffectRequest request) => EffectOutcome.Invalid;
             public bool Has(EffectType type) => active.Exists(e => e.type == type);
             public float Remaining(EffectType type) => 0f;
+            public bool End(EffectType type, CarController source) => false;
 
             public void GetActive(List<ActiveEffect> into)
             {

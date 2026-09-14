@@ -63,5 +63,11 @@ namespace MotorCombat.Core
             }
             for (int i = 0; i < _forget.Count; i++) _lastTick.Remove(_forget[i]);
         }
+
+        /// <summary>Clears only the one (source, target) pair, leaving that target's other sources ticking.</summary>
+        public void Forget(object source, object target)
+        {
+            _lastTick.Remove((source, target));
+        }
     }
 }

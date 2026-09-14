@@ -59,6 +59,20 @@ namespace MotorCombat.Tests
             Assert.IsTrue(schedule.TryTick(Zone, Car, 0.1f, 0.5f));
         }
 
+        /// <summary>Forgetting one (source, target) pair must not disturb another source ticking the same target.</summary>
+        [Test]
+        public void Forget_BySourceAndTarget_LeavesAnotherSourcesPairOnTheSameTargetIntact()
+        {
+            var schedule = new TickSchedule();
+            schedule.TryTick(Zone, Car, 0f, 0.5f);
+            schedule.TryTick(OtherZone, Car, 0f, 0.5f);
+
+            schedule.Forget(Zone, Car);
+
+            Assert.IsTrue(schedule.TryTick(Zone, Car, 0.1f, 0.5f), "Zone's pair was forgotten, so it is due again at once");
+            Assert.IsFalse(schedule.TryTick(OtherZone, Car, 0.1f, 0.5f), "OtherZone's pair on the same target is untouched, still due at 0.5");
+        }
+
         /// <summary>25 physics steps of 0.02 s sum to slightly under 0.5 in float.</summary>
         [Test]
         public void AccumulatedFixedSteps_StillTickOnTime()

@@ -31,6 +31,14 @@ namespace MotorCombat.Tests
         }
 
         [Test]
+        public void DisplayedTenths_RoundsUp_AndFlagsUntimedAsInfinite()
+        {
+            Assert.AreEqual(12, EffectChipLayout.DisplayedTenths(1.2f));
+            Assert.AreEqual(13, EffectChipLayout.DisplayedTenths(1.21f));
+            Assert.AreEqual(EffectChipLayout.Untimed, EffectChipLayout.DisplayedTenths(float.PositiveInfinity));
+        }
+
+        [Test]
         public void Text_UsesInvariantCulture_AndDropsTheTimeWhenUntimed()
         {
             CultureInfo previous = CultureInfo.CurrentCulture;
