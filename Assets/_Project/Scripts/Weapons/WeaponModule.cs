@@ -116,17 +116,22 @@ namespace MotorCombat.Weapons
             if (slot >= 0 && slot < Slots) _pending |= 1 << slot;
         }
 
-        /// <summary>One physics step. Public so tests can drive time.</summary>
+        /// <summary>
+        /// One physics step. Public so tests can drive time. FireAllowed is
+        /// re-read for every slot rather than cached once: Release can apply
+        /// self-effects that stun or kill the own car (or a wind-up release
+        /// earlier in this same step can), and a later slot in this same step
+        /// must see that fresh state, not a value captured before it happened.
+        /// </summary>
         public void Step(float now)
         {
             EnsureReady();
-            bool fireAllowed = FireAllowed();
 
             for (int i = 0; i < Slots; i++)
             {
                 if (!_slots[i].windingUp) continue;
 
-                if (!fireAllowed)
+                if (!FireAllowed())
                 {
                     WeaponTiming.Cancel(ref _slots[i]);
                     Log(i, "wind-up cancelled (Fire blocked)");
@@ -146,7 +151,7 @@ namespace MotorCombat.Weapons
                 if ((pending & (1 << i)) == 0) continue;
 
                 WeaponConfig weapon = _valid[i];
-                if (!WeaponTiming.CanPress(_slots[i], weapon != null, fireAllowed, _lock, now))
+                if (!WeaponTiming.CanPress(_slots[i], weapon != null, FireAllowed(), _lock, now))
                 {
                     Log(i, "press dropped");
                     continue;

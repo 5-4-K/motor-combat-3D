@@ -253,5 +253,73 @@ namespace MotorCombat.Tests
             Assert.AreEqual(0, _fired.Count);
             Assert.IsFalse(Status(0, 0f).assigned);
         }
+
+        [Test]
+        public void SelfStunOnRelease_BlocksAPressQueuedInTheSameStep()
+        {
+            WeaponConfig weapon0 = Weapon(cooldown: 3f, windUp: 0.5f, recovery: 0.2f);
+            weapon0.selfEffects = new[] { new EffectSpec { type = EffectType.Stunned, magnitude = 0f, duration = 3f } };
+            Load(weapon0, Weapon());
+
+            PressAt(0, 0f);
+            _weapons.Press(1);
+            _weapons.Step(_t0 + 0.5f);
+
+            Assert.AreEqual(1, _fired.Count, "slot 0's own release still launches");
+            Assert.AreEqual("TestWeapon0", _fired[0].sourceTag);
+        }
+
+        [Test]
+        public void NoWeaponsConfig_LogsAnError_AndDisablesEverySlot()
+        {
+            _weapons.config = null;
+            Load(Weapon());
+            LogAssert.Expect(LogType.Error, new Regex("no WeaponsConfig"));
+
+            PressAt(0, 0f);
+
+            Assert.AreEqual(0, _fired.Count);
+            Assert.IsFalse(Status(0, 0f).assigned);
+        }
+
+        [Test]
+        public void LoadoutLongerThanThree_WarnsAndUsesTheFirstThree()
+        {
+            Load(Weapon(), Weapon(), Weapon(), Weapon());
+            LogAssert.Expect(LogType.Warning, new Regex("only the first 3"));
+
+            Assert.IsTrue(Status(2, 0f).assigned);
+            Assert.IsFalse(_weapons.GetStatus(3, _t0).assigned);
+        }
+
+        [Test]
+        public void TurretDirection_IsReadAtRelease()
+        {
+            Load(Weapon(cooldown: 3f, windUp: 0.5f, recovery: 1f, muzzle: MuzzleKind.Turret));
+            PressAt(0, 0f);
+            _car.AimYaw = 90f;
+            _weapons.Step(_t0 + 0.5f);
+
+            Assert.AreEqual(1, _fired.Count);
+            Assert.AreEqual(1f, _fired[0].direction.x, 1e-4f);
+        }
+
+        [Test]
+        public void CancelledWindUp_KeepsTheLockRunning()
+        {
+            Load(Weapon(cooldown: 3f, windUp: 0.5f, recovery: 1f), Weapon());
+            PressAt(0, 0f);
+
+            _car.Abilities.Block(TestBlock, CarAbility.Fire, 10f, BlockRefresh.KeepLonger);
+            _weapons.Step(_t0 + 0.2f);
+            _car.Abilities.Unblock(TestBlock);
+
+            PressAt(1, 0.6f);
+            Assert.AreEqual(0, _fired.Count, "slot 0's cancelled wind-up never fired, and slot 1 is still locked out");
+            Assert.IsTrue(Status(1, 0.6f).blocked);
+
+            PressAt(1, 1f);
+            Assert.AreEqual(1, _fired.Count);
+        }
     }
 }
