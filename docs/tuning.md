@@ -66,13 +66,14 @@ Yaw is rigid to the chassis in both modes and must stay that way — see
 | `minRamSpeed` | 3 m/s | Minimum attacker forward speed. Slower front contacts are plain physics bumps |
 | `headOnAngleDegrees` | 45° | Headings within this many degrees of opposite (front hit) are head-on, and of parallel (rear hit) are rear. Otherwise flank |
 | `cornerBandMetres` | 0.3 m | Width of the corner band where a front or rear face meets a side |
-| `spinScale` | 1 × | Multiplies the yaw a real impulse at the contact point would give. 1 = physical |
+| `spinScale` | 0.25 × | Multiplies the yaw a real impulse at the contact point would give. 1 = physical |
 | `spinDecayRate` | 2 /s | Rate at which a reeling car's spin decays, as `exp(-rate × dt)` |
 
 Unity's `m_DefaultMaxAngularSpeed` (`ProjectSettings/DynamicsManager.asset`, 50 rad/s by
-default) silently caps `Rigidbody.angularVelocity` — with the placeholders above, spin peaks
-around 39 rad/s at a car's 25 m/s top speed, so raising `attack`, `flankScale` or `spinScale`
-enough can clip the spin a ram would otherwise deal.
+default) silently caps `Rigidbody.angularVelocity`. With the values above, a flank ram near the
+victim's tail at a car's 25 m/s top speed spins it at about 10 rad/s (about 39 rad/s at
+`spinScale` 1), roughly two-thirds of a turn over the reel. Raising `attack`, `flankScale` or
+`spinScale` about five-fold would start to clip the spin a ram deals.
 
 ## ArenaConfig
 
