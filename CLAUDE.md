@@ -72,6 +72,12 @@ user.
 
 **Tuning numbers belong to the user.** Report what feels wrong; do not quietly retune.
 
+**Ask before starting the "Iterative implementation workflow".** When brainstorming an idea
+reaches the point where the design would be written, always ask the user whether to start the
+"Iterative implementation workflow". Only on a yes, run it end to end: write the design in
+sections → self-review → write the implementation plan → self-review → implement with
+subagent-driven development (SDD).
+
 ## Not built yet
 
 Weapons. Menus, lobby, practice mode, car select. Netcode — only the `IInputProvider` seam
