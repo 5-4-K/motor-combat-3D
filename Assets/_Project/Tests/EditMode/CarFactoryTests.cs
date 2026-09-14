@@ -1,5 +1,7 @@
+using System.Text.RegularExpressions;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.TestTools;
 using MotorCombat.Core;
 using MotorCombat.Cars;
 using MotorCombat.Driving;
@@ -7,6 +9,7 @@ using MotorCombat.Aiming;
 using MotorCombat.Ramming;
 using MotorCombat.Combat;
 using MotorCombat.Effects;
+using MotorCombat.Weapons;
 
 namespace MotorCombat.Tests
 {
@@ -42,6 +45,10 @@ namespace MotorCombat.Tests
             _definition.wreckConfig = ScriptableObject.CreateInstance<WreckConfig>();
             _definition.effectsConfig = ScriptableObject.CreateInstance<EffectsConfig>();
 
+            _definition.weaponsConfig = ScriptableObject.CreateInstance<WeaponsConfig>();
+            _definition.hurtboxes = new[] { new HurtboxBox { centre = Vector3.zero, size = new Vector3(2f, 1.2f, 4.5f) } };
+            _definition.loadout = new WeaponConfig[3];
+
             _car = CarFactory.Spawn(
                 _definition, Vector3.zero, Quaternion.identity, null, Color.white);
         }
@@ -57,6 +64,7 @@ namespace MotorCombat.Tests
             Object.DestroyImmediate(_definition.ramConfig);
             Object.DestroyImmediate(_definition.wreckConfig);
             Object.DestroyImmediate(_definition.effectsConfig);
+            Object.DestroyImmediate(_definition.weaponsConfig);
             Object.DestroyImmediate(_definition);
         }
 
@@ -286,6 +294,58 @@ namespace MotorCombat.Tests
             var block = new MaterialPropertyBlock();
             renderer.GetPropertyBlock(block, 0);
             Assert.AreEqual(Color.red, block.GetColor("_BaseColor"));
+        }
+
+        // --- Hurtboxes and weapons ---------------------------------------------
+
+        [Test]
+        public void Spawn_BuildsTheHurtboxChild_OnTheHurtboxLayer()
+        {
+            Transform child = _car.transform.Find(Hurtbox.ObjectName);
+            Assert.IsNotNull(child);
+            Assert.AreEqual(PhysicsLayers.Hurtbox, child.gameObject.layer);
+            Assert.AreSame(_car, child.GetComponent<Hurtbox>().Car);
+
+            var boxes = child.GetComponents<BoxCollider>();
+            Assert.AreEqual(1, boxes.Length);
+            Assert.IsTrue(boxes[0].isTrigger);
+            Assert.AreEqual(new Vector3(2f, 1.2f, 4.5f), boxes[0].size);
+        }
+
+        [Test]
+        public void Spawn_BuildsOneTriggerPerHurtboxEntry()
+        {
+            _definition.hurtboxes = new[]
+            {
+                new HurtboxBox { centre = new Vector3(0f, -0.2f, 1f), size = new Vector3(2f, 0.8f, 2f) },
+                new HurtboxBox { centre = new Vector3(0f, 0.1f, -1f), size = new Vector3(2f, 1.2f, 2.5f) }
+            };
+            _modelCar = CarFactory.Spawn(_definition, Vector3.zero, Quaternion.identity, null, Color.white);
+
+            var boxes = _modelCar.transform.Find(Hurtbox.ObjectName).GetComponents<BoxCollider>();
+            Assert.AreEqual(2, boxes.Length);
+            Assert.AreEqual(new Vector3(0f, -0.2f, 1f), boxes[0].center);
+            Assert.AreEqual(new Vector3(2f, 1.2f, 2.5f), boxes[1].size);
+        }
+
+        [Test]
+        public void Spawn_WithNoHurtboxes_LogsAnError_AndBuildsNone()
+        {
+            _definition.hurtboxes = new HurtboxBox[0];
+            LogAssert.Expect(LogType.Error, new Regex("no hurtboxes"));
+
+            _modelCar = CarFactory.Spawn(_definition, Vector3.zero, Quaternion.identity, null, Color.white);
+
+            Assert.IsNull(_modelCar.transform.Find(Hurtbox.ObjectName));
+        }
+
+        [Test]
+        public void Spawn_WiresTheWeaponModuleFromTheDefinition()
+        {
+            var weapons = _car.GetComponent<WeaponModule>();
+            Assert.AreSame(_definition.weaponsConfig, weapons.config);
+            Assert.AreSame(_definition.loadout, weapons.loadout);
+            Assert.AreSame(weapons, _car.GetComponent<IWeaponSlots>());
         }
     }
 }

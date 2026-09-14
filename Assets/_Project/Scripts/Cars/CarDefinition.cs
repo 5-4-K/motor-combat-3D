@@ -4,6 +4,8 @@ using MotorCombat.Aiming;
 using MotorCombat.Ramming;
 using MotorCombat.Combat;
 using MotorCombat.Effects;
+using MotorCombat.Core;
+using MotorCombat.Weapons;
 
 namespace MotorCombat.Cars
 {
@@ -69,5 +71,15 @@ namespace MotorCombat.Cars
         public RamConfig ramConfig;
         public WreckConfig wreckConfig;
         public EffectsConfig effectsConfig;
+
+        [Header("Weapons")]
+        public WeaponsConfig weaponsConfig;
+
+        [Tooltip("Slot 1 (LMB), slot 2 (RMB), slot 3 (Space). Leave an entry empty for an empty slot.")]
+        public WeaponConfig[] loadout = new WeaponConfig[3];
+
+        [Tooltip("Boxes weapons hit, in the car's local space relative to its centre. At least one must span " +
+                 "WeaponsConfig.fireHeight above the floor. Empty means weapons can't hit this car.")]
+        public HurtboxBox[] hurtboxes = new HurtboxBox[0];
     }
 }

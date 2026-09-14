@@ -66,6 +66,8 @@ namespace MotorCombat.Cars
 
             var controller = car.AddComponent<CarController>();
 
+            BuildHurtboxes(car, controller, definition);
+
             car.AddComponent<DrivingModule>().config = definition.driveConfig;
             car.AddComponent<AimModule>().config = definition.aimConfig;
             controller.Stats.SetBase(CarStat.Attack, definition.attack);
@@ -74,7 +76,9 @@ namespace MotorCombat.Cars
             controller.Stats.SetBase(CarStat.Resistance, definition.resistance);
 
             car.AddComponent<RammingModule>().config = definition.ramConfig;
-            car.AddComponent<WeaponModule>();
+            var weapons = car.AddComponent<WeaponModule>();
+            weapons.config = definition.weaponsConfig;
+            weapons.loadout = definition.loadout;
 
             car.AddComponent<Health>().maxHealth = definition.maxHealth;
             car.AddComponent<WreckSequence>().config = definition.wreckConfig;
@@ -84,6 +88,44 @@ namespace MotorCombat.Cars
 
             controller.Bind(provider);
             return controller;
+        }
+
+        // --- Hurtboxes --------------------------------------------------------
+
+        /// <summary>
+        /// One trigger box per entry on a child on the Hurtbox layer, which collides
+        /// with nothing: weapons find it only by query. A trigger adds no contacts,
+        /// mass or inertia to the root Rigidbody.
+        /// </summary>
+        static void BuildHurtboxes(GameObject car, CarController controller, CarDefinition definition)
+        {
+            if (definition.hurtboxes == null || definition.hurtboxes.Length == 0)
+            {
+                Debug.LogError($"[MotorCombat] CarDefinition '{definition.name}' has no hurtboxes; weapons can't hit this car.", definition);
+                return;
+            }
+
+            var child = new GameObject(Hurtbox.ObjectName);
+            child.transform.SetParent(car.transform, false);
+
+            int layer = PhysicsLayers.Hurtbox;
+            if (layer >= 0) child.layer = layer;
+
+            child.AddComponent<Hurtbox>().Car = controller;
+
+            foreach (HurtboxBox box in definition.hurtboxes)
+            {
+                var collider = child.AddComponent<BoxCollider>();
+                collider.isTrigger = true;
+                collider.center = box.centre;
+                collider.size = box.size;
+            }
+
+            if (definition.weaponsConfig != null
+                && !HurtboxRules.SpansHeight(definition.hurtboxes, definition.height, definition.weaponsConfig.fireHeight))
+            {
+                Debug.LogWarning($"[MotorCombat] CarDefinition '{definition.name}': no hurtbox spans the fire height ({definition.weaponsConfig.fireHeight} m); shots could pass this car.", definition);
+            }
         }
 
         // --- Visuals ----------------------------------------------------------
