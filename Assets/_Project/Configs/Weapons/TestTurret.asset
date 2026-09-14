@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 864ec0670ef553147a10fc18b1c15ada, type: 3}
+  m_Name: TestTurret
+  m_EditorClassIdentifier: MotorCombat.Weapons::MotorCombat.Weapons.WeaponConfig
+  displayName: Test Turret
+  delivery: 0
+  muzzle: 0
+  fixedMuzzles: 1
+  cooldownSeconds: 0.5
+  windUpSeconds: 0
+  recoverySeconds: 0.2
+  shot:
+    speed: 60
+    range: 60
+    radius: 0.25
+  hitPayload:
+    damageKind: 0
+    damageAmount: 50
+    effects: []
+    push:
+      speed: 0
+      direction: 0
+      spinScale: 0
+      reelSeconds: 0
+  selfEffects: []

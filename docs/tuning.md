@@ -92,6 +92,35 @@ Reeling, weapon configs later). See [effects.md](effects.md) for the effect syst
 | `debugPercent` | 30 | Magnitude used by the debug menus for Corroded, Spiked, Fortified and Exhausted |
 | `debugOverheatAmount` | 20 | Magnitude used by the debug menu for Overheated |
 
+## WeaponsConfig
+
+`Assets/_Project/Configs/WeaponsConfig.asset`. The one rule shared by every weapon on every
+car; each weapon's own numbers live on its `WeaponConfig` asset instead. See
+[weapons.md](weapons.md) for the weapon system itself.
+
+| Field | Default | Notes |
+|---|---|---|
+| `fireHeight` | 0.6 m | Height above the car's floor at which every muzzle on every car fires |
+
+### Test weapons (`Assets/_Project/Configs/Weapons/`)
+
+Placeholders for the user to tune, created by `ConfigAssetBootstrap.CreateDefaults` and
+assigned to Bastion's `loadout` (slot 1, 2, 3 in this order):
+
+| Field | `TestTurret` | `TestFrontRear` | `TestSides` |
+|---|---|---|---|
+| `muzzle` | Turret | Fixed: Front + Rear | Fixed: Left + Right |
+| `cooldownSeconds` | 0.5 | 3 | 4 |
+| `windUpSeconds` | 0 | 0.5 | 0 |
+| `recoverySeconds` | 0.2 | 1 | 0.5 |
+| `shot.speed` | 60 m/s | 40 m/s | 50 m/s |
+| `shot.range` | 60 m | 40 m | 30 m |
+| `shot.radius` | 0.25 m | 0.35 m | 0.4 m |
+| `hitPayload.damageAmount` | 50 (Flat) | 80 (Flat) | 40 (Flat) |
+| `hitPayload.effects` | — | Corroded 30%, 4 s | — |
+| `hitPayload.push` | — | — | 8 m/s, AlongTravel, spin 1, reel 1 s |
+| `selfEffects` | — | — | Spiked 20%, 2 s |
+
 ## WreckConfig
 
 | Field | Default | Notes |
@@ -144,6 +173,9 @@ future game mode brings its own rule and config. See [combat.md](combat.md#respa
 | `strength` | 1 | Multiplies shove dealt |
 | `resistance` | 1 | Divides shove received; must be > 0 |
 | `driveConfig` / `aimConfig` / `ramConfig` / `wreckConfig` / `effectsConfig` | references | |
+| `weaponsConfig` | reference | Global weapon rules; see [WeaponsConfig](#weaponsconfig) above |
+| `loadout` | `[TestTurret, TestFrontRear, TestSides]` | Slot 1 (LMB), slot 2 (RMB), slot 3 (Space); a `null` entry is an empty slot |
+| `hurtboxes` | one box, `centre = 0`, `size = (2.2075, 1.3422, 4.6568)` | Matches the collision box exactly; see [weapons.md](weapons.md#hurtboxes) |
 
 Changing `length` no longer resizes the arena — that coupling was removed deliberately.
 

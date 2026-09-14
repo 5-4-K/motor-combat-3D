@@ -105,6 +105,10 @@ give a solid box of that footprint — pushing a victim's tail toward its right 
 yaw (the nose swings left). Head-on rams never spin: the shove is applied through the
 centre.
 
+This formula now lives in Core as `PushMath.SpinDelta`, shared with weapon pushes;
+`RamRules.SpinDelta` is a one-line delegate to it and `RamRulesTests` is unchanged — see
+[weapons.md](weapons.md#payload).
+
 ## Damage
 
 Alongside the shove, a flank or rear ram also sends the victim a flat `DamageRequest`

@@ -11,6 +11,7 @@ Open the project, open `Assets/_Project/Scenes/Arena.unity`, press Play.
   including on the spot.
 - **Mouse** — aim within a cone. Cursor is locked; the crosshair holds its screen position
   while you steer.
+- **LMB / RMB / Space** — fire weapon slots 1 / 2 / 3. See [weapons.md](weapons.md).
 - First/third person switches on `Assets/_Project/Configs/CameraConfig.asset`.
 
 ## Commands
@@ -66,17 +67,17 @@ is rejected with *"conflicts with a reserved Unity flag managed by this command.
 
 ## Tests
 
-280 EditMode tests, sub-second. Nearly all test pure statics; a handful of fixtures
-(`CarFactoryTests`, `HealthTests`, `CarEffectsTests`, `CarRespawnTests`, `HudRootTests`, among
-others) build throwaway GameObjects to exercise a real component, but none of them load a
-scene.
+368 EditMode tests, sub-second. Nearly all test pure statics; a handful of fixtures
+(`CarFactoryTests`, `HealthTests`, `CarEffectsTests`, `CarRespawnTests`, `HudRootTests`,
+`WeaponModuleTests`, `PayloadApplierTests`, among others) build throwaway GameObjects to
+exercise a real component, but none of them load a scene.
 
 | Fixture | Count |
 |---|---|
 | `DrivePhysicsTests` | 16 |
 | `ArenaMeshBuilderTests` | 15 |
 | `ArenaTextureBuilderTests` | 9 |
-| `CarFactoryTests` | 20 |
+| `CarFactoryTests` | 24 |
 | `AimMathTests` | 6 |
 | `CameraFovTests` | 5 |
 | `ArenaBuilderTests` | 7 |
@@ -88,7 +89,7 @@ scene.
 | `TickScheduleTests` | 9 |
 | `HostilityTests` | 4 |
 | `HealthTests` | 9 |
-| `PhysicsLayersTests` | 3 |
+| `PhysicsLayersTests` | 4 |
 | `WreckMathTests` | 11 |
 | `WreckMaterialsTests` | 1 |
 | `HealthBarLayoutTests` | 7 |
@@ -104,14 +105,27 @@ scene.
 | `CarEffectsTests` | 29 |
 | `EffectChipLayoutTests` | 5 |
 | `EffectChipRowTests` | 1 |
+| `HurtboxRulesTests` | 4 |
+| `PushMathTests` | 3 |
+| `WeaponRulesTests` | 12 |
+| `WeaponTimingTests` | 10 |
+| `MuzzleRulesTests` | 6 |
+| `ShotRulesTests` | 7 |
+| `ShotTests` | 1 |
+| `PayloadRulesTests` | 5 |
+| `PayloadApplierTests` | 8 |
+| `WeaponModuleTests` | 18 |
+| `WeaponSlotLayoutTests` | 4 |
+| `HudShapesTests` | 3 |
+| `WeaponSlotsWidgetTests` | 2 |
 
 The test assembly carries the `UNITY_INCLUDE_TESTS` define constraint, so tests never ship
 in a player build.
 
 ## Acceptance checklist
 
-Behaviour that cannot be unit-tested. All rows 1–37 passed on 2026-09-14, after effects and
-respawn landed (ram rows 13–20 re-walked).
+Behaviour that cannot be unit-tested. Rows 1–37 passed on 2026-09-14; rows 38–53 are new with
+weapons.
 
 | # | Check | Expected |
 |---|---|---|
@@ -152,6 +166,22 @@ respawn landed (ram rows 13–20 re-walked).
 | 35 | Dummy → Corroded, Fortified, Exhausted, then Overhauled | Chips appear in a fixed order; Overhauled clears them all at once |
 | 36 | PlayerCar → Debug: apply Reeling while turning | The car slides and spins down; no steering until REEL ends |
 | 37 | Re-walk ram rows 13–20 | Unchanged — the reel is now an effect with the same abilities |
+| 38 | Park facing the dummy, crosshair centred, LMB | A small shot leaves your nose, flies straight and hits the dummy's rear; its bar drops 50 |
+| 39 | Swing the crosshair to the cone edge, LMB | The shot leaves the front along the crosshair, not along the car |
+| 40 | Tap LMB as fast as you can | At most one shot per 0.5 s; circle 1's grey drains top-first and is gone when it can fire |
+| 41 | RMB facing the dummy | About 0.5 s later two shots leave the front and the rear together; the dummy's bar drops 80 and a CORR chip appears |
+| 42 | RMB, then LMB within 1 s | LMB does nothing; circle 1 shows a red border and slash until RMB's recovery ends, then LMB fires |
+| 43 | Park beside the dummy (dummy on your right), Space | Shots leave both sides; the dummy is shoved away and shows REEL (it spins if the hit is off its centre); your SPIK chip shows and your top speed drops for 2 s |
+| 44 | Temporarily set TestFrontRear.windUpSeconds to 3; RMB, then PlayerCar's CarEffects → Debug: apply Stunned within 3 s; set it back to 0.5 | No shot leaves; circle 2 keeps draining its cooldown; all circles show the slash while stunned |
+| 45 | Drive in front of the dummy; DummyCar's WeaponModule → Debug: fire slot 1 | A shot leaves the dummy's nose and your bar drops 50 |
+| 46 | RMB with nothing behind you | The rear shot starts on your own tail and your HP doesn't change |
+| 47 | LMB at the wall with nothing in between | The shot disappears at the wall |
+| 48 | Temporarily set TestTurret.shot.range to 10, LMB into open space; set it back to 60 | The shot vanishes about 10 m out |
+| 49 | Fire all three, then PlayerCar's Health → Debug: destroy | The circles stay up with slashes while the grey keeps draining; after respawn the slashes go and remaining cooldowns carry over |
+| 50 | Dummy's Health → Debug: destroy; LMB through the wreck while it fades | Shots pass through the wreck |
+| 51 | Dummy → Debug: apply Armored; Space beside it | It is still shoved and reels; its bar doesn't move |
+| 52 | Set TestTurret.cooldownSeconds to 0.1 (recovery is 0.2) and press Play | The console shows an error naming TestTurret and recoverySeconds; circle 1 is an empty ring; set it back to 0.5 |
+| 53 | Re-walk ram rows 13–20 | Unchanged — the hurtbox child and PushMath change nothing about rams |
 
 Row 9 is the one that matters. It is the reason the aiming and camera are built the way they
 are, and the hardest to judge by eye — pick a floor grid line and watch the crosshair

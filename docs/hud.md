@@ -73,6 +73,36 @@ existing chips is all `Show` ever does, so a flickering effect never allocates U
 centres the whole row on 0 for whatever count is currently visible, so a row re-centres itself
 as effects come and go rather than leaving a gap where an ended effect's chip used to sit.
 
+## Weapon slots
+
+`WeaponSlotsWidget` draws the viewer's three weapon slots as circles top-centre, reading the
+viewer's `IWeaponSlots` (see [weapons.md](weapons.md#iweaponslots-and-the-hud)) every
+`LateUpdate`. Circle and ring sprites are generated once in code by `HudShapes`, the same way
+the arena's textures are — an antialiased soft edge rather than a hard-edged pixel circle.
+Layout numbers come from the pure `WeaponSlotLayout`: `CentreX(index, count, diameter, gap)`
+(centred on 0), `CooldownFill(remaining, duration)` (clamped 0–1; a non-positive duration or
+remaining gives 0), and `KeyLabel(index)` (`"LMB"`, `"RMB"`, `"SPC"`).
+
+| Part | Placeholder |
+|---|---|
+| Position | top-centre, `topMargin` 24 ref px from the top of the screen |
+| Circle diameter / gap | 72 / 20 ref px |
+| Background | filled circle, black α 0.35 |
+| Key label | the slot's key text, font 18, white — hidden on an empty slot |
+| Cooldown overlay | filled circle, dark grey `(0.25, 0.25, 0.25, α 0.85)`, `Image.Type.Filled` vertical, origin bottom, `fillAmount = remaining / duration` — the overlay shrinks toward the bottom, so the **top of the circle clears first** |
+| Border | ring, 4 ref px, white α 0.9; **red** `(0.9, 0.15, 0.15)` when the slot is blocked |
+| Slash | a red bar 6 ref px thick, drawn corner to corner top-left to bottom-right, shown only while blocked |
+| Empty slot | ring only, white α 0.25 — no background, no label, no overlay, no slash |
+
+**Background and overlay can both be visible at once**: a slot mid-cooldown always shows the
+grey drain, and additionally shows the red border and slash the instant it's also blocked for
+some other reason (Fire disallowed, or another slot's recovery lock). A slot stays visible
+(and reads as blocked) while its car is a wreck — `EnemyHealthBars` and the health widgets hide
+themselves on death, but the weapon slots don't, since a dead car's weapons genuinely are
+blocked rather than absent. Cooldowns carry over a respawn (see
+[weapons.md](weapons.md#timing)), so a slot that was mid-cooldown when its car died keeps
+draining afterward, uninterrupted by the respawn itself.
+
 ## Not included
 
 Excluded on purpose, addable later as new widgets without touching this code:

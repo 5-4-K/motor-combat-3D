@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 864ec0670ef553147a10fc18b1c15ada, type: 3}
+  m_Name: TestSides
+  m_EditorClassIdentifier: MotorCombat.Weapons::MotorCombat.Weapons.WeaponConfig
+  displayName: Test Sides
+  delivery: 0
+  muzzle: 1
+  fixedMuzzles: 12
+  cooldownSeconds: 4
+  windUpSeconds: 0
+  recoverySeconds: 0.5
+  shot:
+    speed: 50
+    range: 30
+    radius: 0.4
+  hitPayload:
+    damageKind: 0
+    damageAmount: 40
+    effects: []
+    push:
+      speed: 8
+      direction: 0
+      spinScale: 1
+      reelSeconds: 1
+  selfEffects:
+  - type: 5
+    magnitude: 20
+    duration: 2

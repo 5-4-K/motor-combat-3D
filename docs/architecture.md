@@ -5,14 +5,14 @@
 ```
 LocalInputProvider ── implements IInputProvider
         │
-        │  CarInput { throttle, steer, aimDeltaX }
+        │  CarInput { throttle, steer, aimDeltaX, firePressed }
         ▼
 CarController ── owns the Rigidbody and aimYaw, ticks its ICarModules
         │
         ├── AimModule      (Update)       aimYaw += delta × sens, clamped to ±cone/2
         ├── DrivingModule  (FixedUpdate)  thrust │ brake/reverse │ yaw │ grip
         ├── RammingModule  (collision)    region + angle → shove victim, stop attacker; spin decay while reeling
-        └── WeaponModule   (—)            reads CarController.AimDirection       [stub]
+        └── WeaponModule   (FrameTick + FixedUpdate)  slots → timing → muzzles → Shot
 
 CarAbilities (Core) ← ability blocks; written by Ramming and Health (the wreck block); read by Driving, Ramming
 CarStats     (Core) ← base stats + modifiers; read by Combat, Ramming, Driving
@@ -60,8 +60,10 @@ editing that file. Tuning is data; composition is not, yet.
 future sub-project needs to plug into without touching the code that came before it:
 `CarAbilities`/`CarAbility` (ability switches), `CarStats`/`CarStat` (base stats and
 modifiers), `IDamageable`/`DamageRequest` (the one damage path), `Hostility` (who's an enemy of
-whom), `TickSchedule` (periodic damage), `CarRegistry` (every live car) and `PhysicsLayers`
-(layer names and their collision rules).
+whom), `TickSchedule` (periodic damage), `CarRegistry` (every live car), `PhysicsLayers`
+(layer names and their collision rules), `Hurtbox`/`HurtboxBox` (where a car can be hit),
+`PushMath` (the shove-and-spin formula shared by rams and weapon pushes) and `IWeaponSlots`
+(what the HUD reads for the weapon circles).
 
 This is the **closed-spec rule**: a later sub-project only *adds* — new files, new config
 types, new implementations of an existing interface, new registrations against an existing
@@ -72,10 +74,11 @@ zones (sub-projects 2–6) are built entirely by calling into Core, not by chang
 
 Each module is a MonoBehaviour that reads config, calls a static pure function, and writes
 the result to the Rigidbody. The maths lives in `DrivePhysics` and `AimMath` — no
-`GameObject`, no scene, testable directly. This is why 280 EditMode tests run in under a
+`GameObject`, no scene, testable directly. This is why 368 EditMode tests run in under a
 second: most exercise a pure static directly, and the fixtures that don't (`CarFactoryTests`,
-`HealthTests`, `CarEffectsTests`, `CarRespawnTests`, `HudRootTests`, among others) still build
-only throwaway GameObjects for the one component under test, never a scene.
+`HealthTests`, `CarEffectsTests`, `CarRespawnTests`, `HudRootTests`, `WeaponModuleTests`,
+`PayloadApplierTests`, among others) still build only throwaway GameObjects for the one
+component under test, never a scene.
 
 When adding a module, put the decision in a pure static and keep the MonoBehaviour dumb.
 
@@ -98,7 +101,10 @@ on the object being complete belongs in `Start`.
 `aimDeltaX` is a per-frame accumulation that must be consumed once and only once.
 `throttle` and `steer` are level values any number of readers can read harmlessly. Sampling
 again inside `FixedUpdate` would either double-consume the mouse delta or silently drop it,
-depending on how many physics steps fell inside the frame.
+depending on how many physics steps fell inside the frame. `firePressed` is the same kind of
+per-frame event as `aimDeltaX`: `WeaponModule.FrameTick` ORs it into a pending mask in `Update`,
+and the next `Tick` takes and clears that mask — a press is evaluated once, at the first
+physics step after the frame that sampled it. See [weapons.md](weapons.md#input).
 
 - **`Update`** — sample once, cache, call `FrameTick` on every module. Aim consumes
   `aimDeltaX` here.
@@ -131,15 +137,12 @@ motion rather than physics-step judder.
 None of them require the driving code to know the difference. Networking is not
 implemented; only this seam exists.
 
-## Weapons is a seam, not a feature
+## Weapons
 
-`WeaponModule` ships as a real file with a real interface and no behaviour: it exposes a
-fire entry point, reading `CarController.AimDirection`, that no-ops. It exists so
-implementing weapons means filling in a body rather than re-architecting.
-
-Ramming was the other seam; it is now built — see [ramming.md](ramming.md). It reaches
-driving only through `CarController.Abilities`, so the two assemblies still never reference
-each other.
+`WeaponModule` is built — see [weapons.md](weapons.md) for slots, timing, muzzles, hurtboxes,
+the shot, payloads and the HUD contract. Like ramming, it reaches driving only through
+`CarController.Abilities` (`CarAbility.Fire`), so `Weapons` and `Driving` still never
+reference each other.
 
 ## Scene composition
 

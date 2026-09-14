@@ -1,10 +1,11 @@
 # Combat
 
 Every car has health, taken through exactly one damage path, and dies through exactly one
-destruction sequence. Rams are the only damage source today; projectiles, zones, beams and
+destruction sequence. Rams and weapons are the damage sources today; zones, beams and further
 effects plug into the same `DamageRequest`, `CarStats`, `CarAbilities` and `Hostility` seams
 without editing any of the code this page describes. Effects (Stunned, Corroded, …) are
-already built on these seams — see [effects.md](effects.md).
+already built on these seams — see [effects.md](effects.md). Weapons are their own subject —
+see [weapons.md](weapons.md).
 
 ## Source keys
 
@@ -234,13 +235,14 @@ without also resetting its per-life state.
 | `Health` | `UnblockAll()` (drops the wreck block), `Stats.RemoveAll()`, `HealthState.Revive()` — current health back to max, not destroyed. Gates are kept: each belongs to its own source, which removes it itself |
 | `WreckSequence` | Stops the sequence and restores rolled transforms, faded colours and swapped materials. The same restoration happens from a fresh `OnDisable`, so a car deactivated mid-roll never resumes against live visuals |
 | `CarEffects` | Ends every active effect — each one's `OnEnd` runs (see [effects.md](effects.md#death-and-respawn)) |
+| `WeaponModule` | Clears the recovery lock, wind-ups and queued presses; cooldowns keep running |
 
-A later module with per-life state (weapon cooldowns, say) joins respawn by implementing
-`IRespawnable` itself; nothing here changes. Its `ResetForRespawn` must only clear its own
-state, never add a block or a stat modifier: `Health.ResetForRespawn` (`UnblockAll`,
-`Stats.RemoveAll`) runs as just one `IRespawnable` among the others, in no guaranteed order
-relative to the rest, so a reset that adds a block or modifier could run before or after
-`Health`'s clear and either get wiped immediately or leak into the new life.
+A later module with per-life state joins respawn by implementing `IRespawnable` itself; nothing
+here changes. Its `ResetForRespawn` must only clear its own state, never add a block or a stat
+modifier: `Health.ResetForRespawn` (`UnblockAll`, `Stats.RemoveAll`) runs as just one
+`IRespawnable` among the others, in no guaranteed order relative to the rest, so a reset that
+adds a block or modifier could run before or after `Health`'s clear and either get wiped
+immediately or leak into the new life.
 
 ### The placeholder rule
 
@@ -294,11 +296,13 @@ the box, not part of it.
 | `Arena` | 8 | Ground and wall (`ArenaBuilder`) |
 | `Car` | 9 | Live car root (`CarFactory`) |
 | `Wreck` | 10 | Destroyed car root |
+| `Hurtbox` | 11 | Car hurtbox children — weapons query it; it collides with nothing |
 
-`Wreck` collides only with `Arena`; `Car` collides with `Car` and `Arena`; every other pair
-keeps Unity's defaults. The names live in `ProjectSettings/TagManager.asset`. Later
-sub-projects add their own layers (projectiles, obstacles, zones) beside these three without
-touching them.
+`Wreck` collides only with `Arena`; `Car` collides with `Car` and `Arena`; `Hurtbox` collides
+with nothing at all — it is reached only by a weapon's own query, never by a contact or trigger
+callback (see [weapons.md](weapons.md#hurtboxes)); every other pair keeps Unity's defaults. The
+names live in `ProjectSettings/TagManager.asset`. Later sub-projects add their own layers
+(projectiles, obstacles, zones) beside these four without touching them.
 
 **A later layer that should touch wrecks must re-enable that pair itself.**
 `ConfigureCollisions()` loops every layer **index** 0–31 and calls
