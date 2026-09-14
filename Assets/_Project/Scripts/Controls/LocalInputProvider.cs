@@ -6,8 +6,9 @@ namespace MotorCombat.Controls
 {
     /// <summary>
     /// Keyboard and mouse. Reads devices directly rather than through an action
-    /// asset — the control set is three axes and will be replaced by a network
-    /// provider for real play, so an .inputactions asset would be ceremony.
+    /// asset — the control set is three axes and three fire keys and will be
+    /// replaced by a network provider for real play, so an .inputactions asset
+    /// would be ceremony.
     /// </summary>
     public class LocalInputProvider : MonoBehaviour, IInputProvider
     {
@@ -42,12 +43,15 @@ namespace MotorCombat.Controls
                 if (keyboard.sKey.isPressed) input.throttle -= 1f;
                 if (keyboard.dKey.isPressed) input.steer += 1f;
                 if (keyboard.aKey.isPressed) input.steer -= 1f;
+                if (keyboard.spaceKey.wasPressedThisFrame) input.firePressed |= 1 << 2;
             }
 
             if (mouse != null)
             {
                 // Already a per-frame displacement in pixels. Do not scale by dt.
                 input.aimDeltaX = mouse.delta.ReadValue().x;
+                if (mouse.leftButton.wasPressedThisFrame) input.firePressed |= 1 << 0;
+                if (mouse.rightButton.wasPressedThisFrame) input.firePressed |= 1 << 1;
             }
 
             return input;
