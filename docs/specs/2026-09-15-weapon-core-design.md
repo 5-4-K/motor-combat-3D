@@ -286,6 +286,9 @@ struct PayloadHit { CarController source; string sourceTag; float attack; CarCon
                     Vector3 point; Vector3 travelDirection; Vector3 hitboxCentre; }
 ```
 
+The applier itself refuses a target that isn't `Targetable`, isn't an enemy of the source, or is
+already destroyed, so every future caller (explosions, fields) inherits "live enemies only".
+
 Order (decision — effects first so a Stunned in the list doesn't cancel the push that follows):
 1. **Effects:** each `EffectSpec` → `IEffectReceiver.Apply { source, sourceTag, type, magnitude,
    duration, attack }` (hostility applies).
