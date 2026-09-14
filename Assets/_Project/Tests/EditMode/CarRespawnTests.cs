@@ -1,21 +1,30 @@
 using NUnit.Framework;
 using UnityEngine;
 using MotorCombat.Core;
+using MotorCombat.Combat;
 
 namespace MotorCombat.Tests
 {
+    /// <summary>
+    /// CarRespawn's reset-before-reactivate ordering (the Respawnables loop runs
+    /// before root.SetActive(true)) is verified by inspection, not by an
+    /// executable test: EditMode cannot observe activeSelf from inside a
+    /// component's own reset method without a MonoBehaviour test double, and a
+    /// MonoBehaviour defined in this test assembly cannot be attached (Unity
+    /// refuses AddComponent for types compiled into a test assembly). Instead,
+    /// Respawn_ResetsTheCarsRespawnables_RevivingADestroyedCar below exercises a
+    /// real production IRespawnable (Health) end to end.
+    /// </summary>
     public class CarRespawnTests
     {
         GameObject _object;
         CarController _car;
-        RespawnProbe _probe;
 
         [SetUp]
         public void SetUp()
         {
             _object = new GameObject("Car", typeof(CarController));
             _car = _object.GetComponent<CarController>();
-            _probe = _object.AddComponent<RespawnProbe>();
         }
 
         [TearDown]
@@ -25,28 +34,18 @@ namespace MotorCombat.Tests
         }
 
         [Test]
-        public void Respawn_ResetsEveryRespawnableBeforeReactivating()
+        public void Respawn_ResetsTheCarsRespawnables_RevivingADestroyedCar()
         {
-            if (_probe == null)
-            {
-                // This EditMode test assembly is a Unity test assembly (it
-                // references UnityEditor.TestRunner / nunit.framework.dll), and
-                // Unity refuses GameObject.AddComponent for a MonoBehaviour
-                // defined inside one: "Can't add script behaviour 'RespawnProbe'
-                // because it is an editor script." The reset-before-reactivate
-                // ordering this test exists to verify is still enforced by
-                // CarRespawn.Respawn (the Respawnables loop runs before
-                // root.SetActive(true)) — see the self-review concern in
-                // task-1-report.md.
-                Assert.Ignore("RespawnProbe could not be attached as a Component: this test assembly is Editor/test-only, so Unity refuses AddComponent for MonoBehaviours defined in it.");
-            }
-
+            var health = _object.AddComponent<Health>();
+            health.maxHealth = 1000f;
+            health.Apply(new DamageRequest { sourceTag = "test", kind = DamageKind.Flat, amount = 5000f });
             _object.SetActive(false);
 
             CarRespawn.Respawn(_car, Vector3.zero, Quaternion.identity);
 
-            Assert.AreEqual(1, _probe.calls);
-            Assert.IsFalse(_probe.activeWhenReset, "state must be reset before the car is live again");
+            Assert.IsFalse(health.IsDestroyed);
+            Assert.AreEqual(1000f, health.Current);
+            Assert.IsTrue(_car.Abilities.Has(CarAbility.Targetable | CarAbility.Throttle));
         }
 
         [Test]
