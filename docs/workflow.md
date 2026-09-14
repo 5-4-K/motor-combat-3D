@@ -110,8 +110,8 @@ in a player build.
 
 ## Acceptance checklist
 
-Behaviour that cannot be unit-tested. Rows 1–20 passed before combat and the HUD; rows 21–37
-are not yet walked.
+Behaviour that cannot be unit-tested. All rows 1–37 passed on 2026-09-14, after effects and
+respawn landed (ram rows 13–20 re-walked).
 
 | # | Check | Expected |
 |---|---|---|
