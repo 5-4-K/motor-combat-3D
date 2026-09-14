@@ -32,3 +32,4 @@ MonoBehaviour:
   aimConfig: {fileID: 11400000, guid: 7d5dd7ecfe1526d4f922c4a7893f0901, type: 2}
   ramConfig: {fileID: 11400000, guid: 13101bd00fdea9f4d9f39bab4394b845, type: 2}
   wreckConfig: {fileID: 11400000, guid: 2d7dd25cedc9386408e69d204df1680a, type: 2}
+  effectsConfig: {fileID: 11400000, guid: ce2470c74cf58cc4ab5bd68536d1b805, type: 2}

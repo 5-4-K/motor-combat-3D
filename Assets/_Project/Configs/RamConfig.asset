@@ -21,4 +21,3 @@ MonoBehaviour:
   headOnAngleDegrees: 45
   cornerBandMetres: 0.3
   spinScale: 0.25
-  spinDecayRate: 2

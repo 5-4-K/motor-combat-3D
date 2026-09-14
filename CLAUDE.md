@@ -1,7 +1,8 @@
 # motor-combat-3D
 
 3D car brawl game. Unity 6 (`6000.6.0f1`), URP. Currently a playable skeleton: one arena,
-one drivable car, one dummy to ram. Ramming, health and destruction work; no weapons, no menus, no netcode.
+one drivable car, one dummy to ram. Ramming, health, destruction, respawn and effects work;
+no weapons, no menus, no netcode.
 
 ## Documentation
 
@@ -11,7 +12,8 @@ one drivable car, one dummy to ram. Ramming, health and destruction work; no wea
 | [docs/driving-physics.md](docs/driving-physics.md) | Anything about how the car moves |
 | [docs/aiming-and-camera.md](docs/aiming-and-camera.md) | Anything about the crosshair or the camera — they are one subject |
 | [docs/ramming.md](docs/ramming.md) | Anything about car-vs-car collisions, lock or reel |
-| [docs/combat.md](docs/combat.md) | Health, damage, stats, ability switches, destruction, physics layers |
+| [docs/combat.md](docs/combat.md) | Health, damage, stats, ability switches, destruction, respawn, physics layers |
+| [docs/effects.md](docs/effects.md) | Anything about effects (Stunned, Corroded, …), stacking or the effect chips |
 | [docs/hud.md](docs/hud.md) | Anything drawn on screen besides the crosshair |
 | [docs/arena-and-rendering.md](docs/arena-and-rendering.md) | Arena geometry, textures, materials, or a URP problem |
 | [docs/tuning.md](docs/tuning.md) | Changing a number, or replacing the box with a real car model |
@@ -72,7 +74,7 @@ user.
 
 ## Not built yet
 
-Weapons, effects, respawn. Menus, lobby, practice mode, car select. Netcode — only the
-`IInputProvider` seam exists. Audio. The car is one model (Bastion); there is no car select.
+Weapons. Menus, lobby, practice mode, car select. Netcode — only the `IInputProvider` seam
+exists. Audio. The car is one model (Bastion); there is no car select.
 
 `WeaponModule` is a deliberate empty seam, not an oversight.

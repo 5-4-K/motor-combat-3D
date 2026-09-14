@@ -26,16 +26,21 @@ CrosshairHUD (LateUpdate) ← CarController.AimDirection, projected through the 
 
 ## Modularity is compile-enforced, not aspirational
 
-**One assembly definition per script folder** — 14 of them. A reference from `Driving` to
+**One assembly definition per script folder** — 15 of them. A reference from `Driving` to
 `Weapons` is a compile error, not slow architectural drift. Every gameplay assembly
 references `MotorCombat.Core` and nothing else; only `MotorCombat.Cars` and
 `MotorCombat.Bootstrap` compose across modules.
 
 ```
 MotorCombat.Core      Aiming    Arena     Bootstrap  Cameras   Cars
-             Combat    Controls Driving   HUD       Ramming    Weapons
-             EditorTools        Tests.EditMode
+             Combat    Controls Driving   Effects    HUD       Ramming
+             Weapons   EditorTools        Tests.EditMode
 ```
+
+`Cars`, `Bootstrap` and `EditorTools` all now also reference `Effects`: a car is built with a
+`CarEffects` module, `GameBootstrap` validates and wires its `EffectsConfig`, and
+`ConfigAssetBootstrap`/`ArenaSceneBuilder` create and assign it, the same way each already
+did for `Combat` and `Ramming`.
 
 The cost is that a new script must go in the right folder. That is the point.
 
@@ -67,7 +72,7 @@ zones (sub-projects 2–6) are built entirely by calling into Core, not by chang
 
 Each module is a MonoBehaviour that reads config, calls a static pure function, and writes
 the result to the Rigidbody. The maths lives in `DrivePhysics` and `AimMath` — no
-`GameObject`, no scene, testable directly. This is why 206 EditMode tests run in under a
+`GameObject`, no scene, testable directly. This is why 273 EditMode tests run in under a
 second with nothing instantiated.
 
 When adding a module, put the decision in a pure static and keep the MonoBehaviour dumb.

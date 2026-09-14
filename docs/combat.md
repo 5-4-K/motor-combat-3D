@@ -2,8 +2,9 @@
 
 Every car has health, taken through exactly one damage path, and dies through exactly one
 destruction sequence. Rams are the only damage source today; projectiles, zones, beams and
-effects (later sub-projects) plug into the same `DamageRequest`, `CarStats`, `CarAbilities`
-and `Hostility` seams without editing any of the code this page describes.
+effects plug into the same `DamageRequest`, `CarStats`, `CarAbilities` and `Hostility` seams
+without editing any of the code this page describes. Effects (Stunned, Corroded, …) are
+already built on these seams — see [effects.md](effects.md).
 
 ## Source keys
 
@@ -76,8 +77,10 @@ order:
 
 `DamageRequest` fields: `source` (the attacking `CarController`, or null for the environment),
 `sourceTag` (`"ram"`, later a weapon or effect id, for attribution and logs), `kind`
-(`Flat` or `MaxHealthPercent`), `amount`, and `allowNonEnemy` (false by default — set true for
-a self-inflicted debuff).
+(`Flat` or `MaxHealthPercent`), `amount`, `allowNonEnemy` (false by default — set true for
+a self-inflicted debuff), and `attack` (a `float?`: the attack captured when the source fired,
+or for Overheated when the effect landed; null uses the source's effective attack at impact —
+see [Formula](#formula)).
 
 `Apply` returns a `DamageResult { outcome, dealt, killed }` immediately, so a caller — a
 projectile deciding whether it hit, or `RammingModule` after a flank ram — gets an instant
@@ -88,8 +91,9 @@ raw mitigated amount, so kill credit and logs never over-report.
 ## Formula
 
 `Mitigate(raw, attack, defense) = raw × attack / 100 × 100 / (100 + max(0, defense))`, where
-`attack` is the source's effective attack (100 when the source is null — the environment hits
-as hard as a baseline car) and `defense` is the target's effective defense, floored at 0.
+`attack` is the request's `attack` snapshot when set, otherwise the source's effective attack
+(100 when the source is null — the environment hits as hard as a baseline car), and `defense`
+is the target's effective defense, floored at 0.
 
 | Attacker attack | Target defense | Damage (raw 100) |
 |---|---|---|
@@ -149,7 +153,7 @@ Ram lock, reel and the wreck are all just blocks:
 | Block | Abilities | Duration | Refresh |
 |---|---|---|---|
 | Ram lock (attacker, both cars in a head-on) | `Throttle \| Steer \| Ram` | `attackerLockSeconds` | `KeepLonger` |
-| Ram reel (victim) | `Throttle \| Steer \| YawHold \| Grip \| Ram` | `reelSeconds` | `Restart` |
+| Ram reel (victim) | `Throttle \| Steer \| YawHold \| Grip \| Ram` | `reelSeconds` (Reeling effect, see effects.md) | effect stacking (Reeling stacks by default) |
 | Wreck | `Throttle \| Steer \| Fire \| Ram \| Targetable` | +∞ | `KeepLonger` |
 
 ## Destruction
@@ -176,7 +180,7 @@ cars, and later through weapons and obstacles too.
 | `rollDegrees` | 180 | Barrel roll about the car's length axis |
 | `rollSeconds` | 0.8 | Duration of the roll, eased |
 | `fadeSeconds` | 1.5 | Alpha goes from 1 to 0 over this time |
-| `removeAfterSeconds` | 1.5 | The car GameObject is deactivated, not destroyed, so a future respawn can reuse it |
+| `removeAfterSeconds` | 1.5 | The car GameObject is deactivated, not destroyed, so respawn can reuse it |
 
 **Lift during the roll.** The rolled model rises so its lowest rotated corner never dips below
 the floor: `lift(θ) = max(0, halfWidth·|sin θ| + halfHeight·|cos θ| − halfHeight)`, using the
@@ -201,17 +205,63 @@ every rolled transform, faded colour and swapped material list — including eac
 original `shadowCastingMode` — is restored to what it was before death, and the transparent
 clones are destroyed.
 
-**Respawn is not built.** Reactivating the car GameObject is not enough on its own. A future
-respawn will also need:
+## Respawn
 
-- The root moved back to the `Car` physics layer — `WreckSequence` moves it to `Wreck` but
-  never moves it back.
-- A `HealthState`/`Health` reset — there is no way today to set `Current` back to `Max`.
-- `Health.WreckBlock` unblocked — the untimed `Throttle | Steer | Fire | Ram | Targetable`
-  block otherwise survives reactivation.
-- `WreckSequence` stopped or restored if the car is deactivated mid-sequence — it has no
-  `OnDisable`, so a respawn that reactivates the car while the roll/fade coroutine is still
-  running would resume it against restored (live) visuals.
+`CarRespawn.Respawn(car, position, rotation)` (Core) brings a destroyed car back to life — or
+teleports a live one, which a future game mode may want — in this order:
+
+1. `ResetForRespawn()` runs on every `IRespawnable` component on the car root (see the table
+   below), while the car is still inactive, so nothing runs a frame against the old life's
+   state.
+2. The root goes back to the `Car` physics layer.
+3. The transform is set to the pose; `AimYaw = 0`; `CarController.ClearMotionSnapshot()` zeroes
+   `PreStepVelocity` and `PreStepAngularVelocity`, so a ram in the very first step never reads
+   the wreck's last slide.
+4. The GameObject is reactivated (`SetActive(true)`).
+5. The `Rigidbody`'s position and rotation are set to the pose, and its linear and angular
+   velocity are zeroed.
+
+### What resets
+
+| Component | `ResetForRespawn()` |
+|---|---|
+| `Health` | `UnblockAll()` (drops the wreck block), `Stats.RemoveAll()`, `HealthState.Revive()` — current health back to max, not destroyed. Gates are kept: each belongs to its own source, which removes it itself |
+| `WreckSequence` | Stops the sequence and restores rolled transforms, faded colours and swapped materials. The same restoration happens from a fresh `OnDisable`, so a car deactivated mid-roll never resumes against live visuals |
+| `CarEffects` | Ends every active effect — each one's `OnEnd` runs (see [effects.md](effects.md#death-and-respawn)) |
+
+A later module with per-life state (weapon cooldowns, say) joins respawn by implementing
+`IRespawnable` itself; nothing here changes.
+
+### The placeholder rule
+
+`RespawnRule` (Bootstrap, a `MonoBehaviour` on the `GameBootstrap` object) stands in for a
+future game mode:
+
+- `GameBootstrap` calls `Track(car, spawnPosition, spawnRotation)` for each car it spawns.
+- On `IDamageable.Destroyed` it records `Time.fixedTime`.
+- Every `FixedUpdate`, a pending car respawns once **all** hold:
+  - `now ≥ destroyedAt + respawnDelaySeconds`
+  - the car GameObject is inactive — the wreck sequence has finished, so respawn never cuts a
+    wreck's roll and fade short
+  - the spawn box is clear: `Physics.CheckBox` at the pose, the car's `BoxCollider` size grown
+    by `clearanceMargin` on every side, `Car` layer only, triggers ignored — the check repeats
+    every physics step until it passes, rather than spawning into an overlap and letting PhysX
+    launch both cars apart
+
+There is **no spawn protection**: the car is fully live the moment it reappears.
+
+`RespawnConfig` (`Assets/_Project/Configs/RespawnConfig.asset`):
+
+| Field | Placeholder | Meaning |
+|---|---|---|
+| `respawnDelaySeconds` | 3 s | Seconds from destruction before a respawn may happen |
+| `clearanceMargin` | 0.1 m | Added around the car's box on every side when checking the spawn point is clear |
+
+`GameBootstrap.respawnConfig` is validated the same way as its other configs; `ArenaSceneBuilder`
+assigns it and `ConfigAssetBootstrap` creates the asset.
+
+The HUD needs no changes for respawn: `CarRegistry` re-registers a car in `OnEnable`, and both
+health widgets already hide a car only while `IDamageable.IsDestroyed`.
 
 **Debug hooks.** `Health` carries two Editor-only `[ContextMenu]` entries — "Debug: take 25%
 max HP" and "Debug: destroy" — so damage and death can be tested from the Inspector while every
@@ -256,11 +306,13 @@ takes an index, since the setting is per index-pair, not per name; it must call
 | `CarAbilitiesTests` | 15 |
 | `CarStatsTests` | 10 |
 | `DamageRulesTests` | 9 |
-| `HealthStateTests` | 13 |
+| `HealthStateTests` | 15 |
 | `TickScheduleTests` | 8 |
 | `HostilityTests` | 4 |
-| `HealthTests` | 6 |
+| `HealthTests` | 9 |
 | `PhysicsLayersTests` | 3 |
 | `WreckMathTests` | 11 |
 | `WreckMaterialsTests` | 1 |
 | `SourceKeyIdentityTests` | 1 |
+| `CarRespawnTests` | 4 |
+| `RespawnRulesTests` | 5 |

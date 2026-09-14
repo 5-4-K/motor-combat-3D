@@ -64,18 +64,33 @@ Yaw is rigid to the chassis in both modes and must stay that way — see
 | `flankDamage` | 0 | Flat damage a flank ram deals to the victim; see [combat.md](combat.md#the-damage-path) |
 | `rearDamage` | 0 | Flat damage a rear ram deals to the victim. Head-ons never deal damage |
 | `attackerLockSeconds` | 0.5 s | How long the attacker (and both cars in a head-on) ignore throttle and steer |
-| `reelSeconds` | 1 s | How long a flank or rear victim reels: no throttle, steer or grip; spins freely |
+| `reelSeconds` | 1 s | How long a flank or rear victim Reels (the Reeling effect) |
 | `minRamSpeed` | 3 m/s | Minimum attacker forward speed. Slower front contacts are plain physics bumps |
 | `headOnAngleDegrees` | 45° | Headings within this many degrees of opposite (front hit) are head-on, and of parallel (rear hit) are rear. Otherwise flank |
 | `cornerBandMetres` | 0.3 m | Width of the corner band where a front or rear face meets a side |
 | `spinScale` | 0.25 × | Multiplies the yaw a real impulse at the contact point would give. 1 = physical |
-| `spinDecayRate` | 2 /s | Rate at which a reeling car's spin decays, as `exp(-rate × dt)` |
 
 Unity's `m_DefaultMaxAngularSpeed` (`ProjectSettings/DynamicsManager.asset`, 50 rad/s by
 default) silently caps `Rigidbody.angularVelocity`. With the values above, a flank ram near the
 victim's tail at a car's 25 m/s top speed spins it at about 10 rad/s (about 39 rad/s at
 `spinScale` 1), roughly two-thirds of a turn over the reel. Raising `strength`, `flankScale` or
 `spinScale` about five-fold would start to clip the spin a ram deals.
+
+## EffectsConfig
+
+`Assets/_Project/Configs/EffectsConfig.asset`. Global rules the same for every source of an
+effect; size and duration still come from whatever applies it (`RamConfig.reelSeconds` for
+Reeling, weapon configs later). See [effects.md](effects.md) for the effect system itself.
+
+| Field | Default | Notes |
+|---|---|---|
+| `stunnedStacks` … `exhaustedStacks` (9 bools, no Overhauled) | all false except `reelingStacks` = true | Whether a new copy of that effect landing on a car that already has it restarts the timer (and replaces the size) or does nothing |
+| `overheatedDamageKind` | Flat | Flat or MaxHealthPercent — for every source of Overheated |
+| `overheatedTickSeconds` | 1 s | Tick interval for every source of Overheated. The first tick lands on apply |
+| `reelingSpinDecayRate` | 2 /s | Rate at which a Reeling car's spin decays, as `exp(-rate × dt)`. Moved here from ramming's old per-ram rate, same value |
+| `debugDuration` | 3 s | Duration used by the `CarEffects` Inspector debug menus |
+| `debugPercent` | 30 | Magnitude used by the debug menus for Corroded, Spiked, Fortified and Exhausted |
+| `debugOverheatAmount` | 20 | Magnitude used by the debug menu for Overheated |
 
 ## WreckConfig
 
@@ -84,10 +99,20 @@ victim's tail at a car's 25 m/s top speed spins it at about 10 rad/s (about 39 r
 | `rollDegrees` | 180° | Barrel roll about the car's length axis, visual only |
 | `rollSeconds` | 0.8 s | Duration of the roll, eased |
 | `fadeSeconds` | 1.5 s | Alpha goes from 1 to 0 over this time |
-| `removeAfterSeconds` | 1.5 s | The car is deactivated, not destroyed, so a future respawn can reuse it |
+| `removeAfterSeconds` | 1.5 s | The car is deactivated, not destroyed, so respawn can reuse it |
 
 See [combat.md](combat.md#destruction) for the full sequence, including the lift that keeps
 the rolled model's lowest corner on the floor and the fade-driven shadow cutoff.
+
+## RespawnConfig
+
+`Assets/_Project/Configs/RespawnConfig.asset`. Tuning for the placeholder `RespawnRule`; a
+future game mode brings its own rule and config. See [combat.md](combat.md#respawn).
+
+| Field | Default | Notes |
+|---|---|---|
+| `respawnDelaySeconds` | 3 s | Seconds from destruction before the car may respawn. The wreck's roll and fade always finish first |
+| `clearanceMargin` | 0.1 m | Metres added around the car's box on every side when checking the spawn point is clear |
 
 ## ArenaConfig
 
@@ -118,7 +143,7 @@ the rolled model's lowest corner on the floor and the fade-driven shadow cutoff.
 | `defense` | 0 | Damage reduction with diminishing returns; see [combat.md](combat.md#formula) |
 | `strength` | 1 | Multiplies shove dealt |
 | `resistance` | 1 | Divides shove received; must be > 0 |
-| `driveConfig` / `aimConfig` / `ramConfig` / `wreckConfig` | references | |
+| `driveConfig` / `aimConfig` / `ramConfig` / `wreckConfig` / `effectsConfig` | references | |
 
 Changing `length` no longer resizes the arena — that coupling was removed deliberately.
 

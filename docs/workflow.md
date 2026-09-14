@@ -47,25 +47,25 @@ is rejected with *"conflicts with a reserved Unity flag managed by this command.
 
 ## Tests
 
-206 EditMode tests, sub-second. Nearly all test pure statics; `CarFactoryTests` builds throwaway GameObjects but loads no scene.
+273 EditMode tests, sub-second. Nearly all test pure statics; `CarFactoryTests` builds throwaway GameObjects but loads no scene.
 
 | Fixture | Count |
 |---|---|
 | `DrivePhysicsTests` | 16 |
 | `ArenaMeshBuilderTests` | 15 |
 | `ArenaTextureBuilderTests` | 9 |
-| `CarFactoryTests` | 19 |
+| `CarFactoryTests` | 20 |
 | `AimMathTests` | 6 |
 | `CameraFovTests` | 5 |
 | `ArenaBuilderTests` | 7 |
-| `RamRulesTests` | 37 |
+| `RamRulesTests` | 36 |
 | `CarAbilitiesTests` | 15 |
 | `CarStatsTests` | 10 |
 | `DamageRulesTests` | 9 |
-| `HealthStateTests` | 13 |
+| `HealthStateTests` | 15 |
 | `TickScheduleTests` | 8 |
 | `HostilityTests` | 4 |
-| `HealthTests` | 6 |
+| `HealthTests` | 9 |
 | `PhysicsLayersTests` | 3 |
 | `WreckMathTests` | 11 |
 | `WreckMaterialsTests` | 1 |
@@ -73,14 +73,23 @@ is rejected with *"conflicts with a reserved Unity flag managed by this command.
 | `HudRootTests` | 1 |
 | `CarRegistryTests` | 3 |
 | `SourceKeyIdentityTests` | 1 |
+| `CarRespawnTests` | 4 |
+| `RespawnRulesTests` | 5 |
+| `EffectInfoTests` | 4 |
+| `EffectRulesTests` | 12 |
+| `EffectSetTests` | 6 |
+| `EffectsConfigTests` | 2 |
+| `CarEffectsTests` | 24 |
+| `EffectChipLayoutTests` | 4 |
+| `EffectChipRowTests` | 1 |
 
 The test assembly carries the `UNITY_INCLUDE_TESTS` define constraint, so tests never ship
 in a player build.
 
 ## Acceptance checklist
 
-Behaviour that cannot be unit-tested. Rows 1–20 passed before combat and the HUD; rows 21–26
-are new and not yet walked.
+Behaviour that cannot be unit-tested. Rows 1–20 passed before combat and the HUD; rows 21–37
+are not yet walked.
 
 | # | Check | Expected |
 |---|---|---|
@@ -102,7 +111,7 @@ are new and not yet walked.
 | 16 | Drive into the parked dummy's nose, head-on | You stop dead and are locked ~0.5 s; the dummy is pushed backwards at about a fifth of your speed, no spin. Your own car must not move backwards — if it does, that is PhysX depenetration (see ramming.md) |
 | 17 | After any ram, press W and A/D immediately | No response for ~0.5 s; mouse aim still moves the crosshair |
 | 18 | Hit the dummy's front corner at a shallow vs steep angle | Nearly nose-to-nose (headings within 45° of opposite) is head-on; more than 45° off is flank |
-| 19 | Ram the dummy again while it is still sliding | Second ram applies; its reel restarts |
+| 19 | Ram the dummy again while it is still sliding | Second ram applies; its reel restarts (the REEL chip jumps back up) |
 | 20 | Any ram at top speed | No car leaves the ground or tips |
 | 21 | Play | Your HP bar bottom-centre reads 1000 / 1000; the dummy has a red bar and its name above it |
 | 22 | Drive around the dummy and away from it | Its bar faces you from every side and shrinks with distance, never below a readable size |
@@ -110,6 +119,17 @@ are new and not yet walked.
 | 24 | Temporarily set RamConfig.flankDamage to 100, flank-ram the dummy, then head-on it; set it back to 0 | Flank shortens the bar; head-on does not |
 | 25 | Dummy's Health → Debug: destroy | Bar vanishes at once; dummy slides to a stop, rolls sideways, fades, disappears at ~1.5 s; you can drive through it but it never sinks or passes the wall |
 | 26 | Re-walk ram rows 13–20 | Unchanged — the ability re-expression preserves them |
+| 27 | Dummy's Health → Debug: destroy, then wait | After the fade it disappears; about 3 s after destruction it reappears at its start: full bar, upright, normal colour and shadow |
+| 28 | Park on the dummy's start, destroy it, wait 5 s, then drive off | It does not reappear while you are on the spot; it appears the moment you leave, and nothing is launched |
+| 29 | PlayerCar's Health → Debug: destroy | You reappear at your start ~3 s later, can drive at once, HP reads 1000 / 1000 |
+| 30 | While driving, PlayerCar's CarEffects → Debug: apply Stunned | You stop dead; W/A/D do nothing for 3 s; mouse aim still works; a STUN chip counts down above your HP bar |
+| 31 | Dummy → Debug: apply Stunned, then flank-ram it | It is still shoved and reels (REEL chip under its bar) |
+| 32 | PlayerCar → Debug: apply Spiked, then hold W | Top speed is visibly lower until the SPIK chip ends |
+| 33 | Dummy → Debug: apply Overheated | Its bar drops at once and twice more, a second apart (3 ticks); HEAT chip under its bar |
+| 34 | Dummy → Debug: apply Armored, then Overheated | No HP lost while ARMR shows |
+| 35 | Dummy → Corroded, Fortified, Exhausted, then Overhauled | Chips appear in a fixed order; Overhauled clears them all at once |
+| 36 | PlayerCar → Debug: apply Reeling while turning | The car slides and spins down; no steering until REEL ends |
+| 37 | Re-walk ram rows 13–20 | Unchanged — the reel is now an effect with the same abilities |
 
 Row 9 is the one that matters. It is the reason the aiming and camera are built the way they
 are, and the hardest to judge by eye — pick a floor grid line and watch the crosshair

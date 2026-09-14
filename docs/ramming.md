@@ -116,13 +116,22 @@ single attacker to credit, and the shove itself is already deliberately weak
 
 ## Locked and reeling
 
-Lock and reel are both plain `CarAbilities` blocks — see
-[combat.md](combat.md#ability-switches) for the general mechanism. Ram lock blocks
-`Throttle | Steer | Ram` for `attackerLockSeconds` with `BlockRefresh.KeepLonger`; ram reel
-blocks `Throttle | Steer | YawHold | Grip | Ram` for `reelSeconds` with
-`BlockRefresh.Restart`. Each is registered under its own module-static source key
-(`LockBlock`, `ReelBlock`), so ramming's blocks never interact with any other system's, and
-the observable effect is the table below:
+Ram lock is still a plain `CarAbilities` block — see [combat.md](combat.md#ability-switches)
+for the general mechanism — registered under its own module-static source key (`LockBlock`)
+so it never interacts with any other system's blocks. It blocks `Throttle | Steer | Ram` for
+`attackerLockSeconds` with `BlockRefresh.KeepLonger`. It is the only block ramming still owns
+directly.
+
+Ram reel is not: a flank or rear ram now applies the **Reeling effect** to the victim through
+its `IEffectReceiver`, after writing the shove —
+`EffectRequest { source = attacker, sourceTag = "ram", type = Reeling, duration = reelSeconds }`.
+Reeling's own block (`Throttle | Steer | YawHold | Grip | Ram`, the same mask ramming's old
+reel block used) is unchanged; only who owns the timer changed. Spin decays at
+`EffectsConfig.reelingSpinDecayRate` (moved here from ramming's old per-ram rate, same value)
+instead of inside `RammingModule.Tick`, which no longer touches spin at all — that's now
+`EffectRules.DecaySpin`, called by `ReelingEffect.OnStep`. A second ram on an
+already-reeling car restarts the effect — `Restarted`, not a second entry — because
+`EffectsConfig.reelingStacks` is on by default; see [effects.md](effects.md#stacking).
 
 | | Normal | Locked | Reeling |
 |---|---|---|---|
@@ -130,27 +139,32 @@ the observable effect is the table below:
 | Aim | works | works | works |
 | Drag | on | on | on |
 | Grip | on | on | **off** |
-| Yaw | set from steer | set from steer (= 0) | **not written by driving**; decays at `spinDecayRate` (1/s, `exp(−rate·dt)`) |
+| Yaw | set from steer | set from steer (= 0) | **not written by driving**; decays at `EffectsConfig.reelingSpinDecayRate` (1/s, `exp(−rate·dt)`) |
 | Can attack | yes | no | no |
 
 An attacker (and both cars in a head-on) is Locked for `attackerLockSeconds`; a flank or
 rear victim Reels for `reelSeconds`. `KeepLonger` means locking never shortens a longer lock
-already running; `Restart` means reeling restarts on a fresh hit, so chaining rams on a
-helpless car keeps it helpless. Because the reel mask is a superset of the lock mask, a car
-that picks up both blocks at once (locked as an attacker, then hit as a reel victim before
-the lock expires) still loses `YawHold` and `Grip` too — `CarAbilities.Has` blocks an ability
-if *any* active block covers it, so the two blocks simply combine rather than one state
-overriding the other. When the reel ends, grip and steering resume through their normal code
-paths, but the two do not behave the
-same way. Grip is itself a 1/s decay (see [every decay value is a
+already running; the Reeling effect's own stacking restarts reeling on a fresh hit, so
+chaining rams on a helpless car keeps it helpless. Because the reel mask is a superset of the
+lock mask, a car that picks up both blocks at once (locked as an attacker, then hit as a reel
+victim before the lock expires) still loses `YawHold` and `Grip` too — `CarAbilities.Has`
+blocks an ability if *any* active block covers it, so the lock block and the Reeling effect's
+block simply combine rather than one state overriding the other. When the reel ends, grip and
+steering resume through their normal code paths, but the two do not behave the same way. Grip
+is itself a 1/s decay (see [every decay value is a
 rate](driving-physics.md#every-decay-value-is-a-rate-in-1s)), so the sideways slide eases
 back in rather than vanishing in one step. Yaw does not: `DrivingModule` writes
 `angularVelocity` directly from `steer` every non-reeling tick (`steer` is 0 for the dummy),
 so whatever spin is still running when the reel ends is cut to zero in a single physics
 step, not eased out. With the placeholder reel (`reelSeconds = 1`) and spin decay
-(`spinDecayRate = 2`), `exp(-2 × 1) ≈ 13.5%` of the initial spin is typically still running
-at that moment and gets snapped away abruptly. Whether to blend yaw back in the way grip
-does is a gameplay/tuning decision for the user, not something fixed here.
+(`reelingSpinDecayRate = 2`), `exp(-2 × 1) ≈ 13.5%` of the initial spin is typically still
+running at that moment and gets snapped away abruptly. Whether to blend yaw back in the way
+grip does is a gameplay/tuning decision for the user, not something fixed here.
+
+**One step later.** `CarEffects` ticks last on a car — after `DrivingModule` and
+`RammingModule` — so the Reeling effect's expiry, and the unblock it triggers, happens after
+driving has already run for that physics step. Driving regains yaw control one physics step
+(0.02 s) later than the old block-only reel did. It isn't noticeable.
 
 ## Why velocities are overwritten, not added
 
@@ -208,11 +222,13 @@ looked like.
 
 ## Tests
 
-`RamRulesTests` — 37 tests covering every region including corner-band edges,
+`RamRulesTests` — 36 tests covering every region including corner-band edges,
 attacker-qualifying regions, each type including the 45° boundary on both sides, every `Resolve` case from
 §1.4, shove magnitude and the resistance clamp, damage (`DamageFor`), and spin (zero through
-the centre, sign, linearity in `spinScale`, timestep-independent decay).
+the centre, sign, linearity in `spinScale`). Spin decay moved to `EffectRules.DecaySpin` and
+is covered by `EffectRulesTests`; see [effects.md](effects.md#tests).
 
-Lock and reel's timing — refresh modes, independence between sources, untimed blocks — is
-covered by `CarAbilitiesTests`, since both are just ordinary blocks now. See
-[combat.md](combat.md#tests).
+Lock's timing — refresh modes, independence between sources, untimed blocks — is covered by
+`CarAbilitiesTests`, since it is still an ordinary block. Reeling's timing is covered by
+`CarEffectsTests`, since it is now an effect. See [combat.md](combat.md#tests) and
+[effects.md](effects.md#tests).
