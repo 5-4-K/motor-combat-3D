@@ -36,8 +36,12 @@ namespace MotorCombat.Weapons
         float _remaining;
         int _mask;
         int _arenaLayer;
+        bool _spent;
 
         public float Remaining => _remaining;
+
+        /// <summary>True once this shot has hit something or run out of range — destroyed or pending destruction.</summary>
+        public bool Spent => _spent;
 
         public static Shot Launch(in ShotLaunch launch)
         {
@@ -63,6 +67,12 @@ namespace MotorCombat.Weapons
 
         public void Advance(float dt)
         {
+            // Destroy() is deferred to end of frame, so a shot that hit or ran
+            // out of range this step must not sweep again if FixedUpdate runs
+            // a second time before the destroy takes effect — otherwise a
+            // zero-length sweep from the same spot can hit the same car again.
+            if (_spent) return;
+
             Vector3 position = transform.position;
             Vector3 direction = _launch.direction;
             float step = ShotRules.StepDistance(_launch.settings.speed, dt, _remaining);
@@ -116,14 +126,26 @@ namespace MotorCombat.Weapons
                 }
 
                 ClearBuffers(count);
-                Destroy(gameObject);
+                Perish();
                 return;
             }
 
             ClearBuffers(count);
             transform.position = position + direction * step;
             _remaining -= step;
-            if (_remaining <= ShotRules.RangeTolerance) Destroy(gameObject);
+            if (_remaining <= ShotRules.RangeTolerance) Perish();
+        }
+
+        /// <summary>Marks the shot spent before destroying it, so a same-frame re-entry into Advance is a no-op.</summary>
+        void Perish()
+        {
+            _spent = true;
+
+            // Destroy() is illegal outside play mode (EditMode tests included);
+            // DestroyImmediate is illegal to rely on in play mode (it can run
+            // inside physics callbacks). Each context gets the one that's safe.
+            if (Application.isPlaying) Destroy(gameObject);
+            else DestroyImmediate(gameObject);
         }
 
         static bool IsTargetable(CarController car)
