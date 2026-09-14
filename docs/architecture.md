@@ -14,7 +14,11 @@ CarController ── owns the Rigidbody and aimYaw, ticks its ICarModules
         ├── RammingModule  (collision)    region + angle → shove victim, stop attacker; spin decay while reeling
         └── WeaponModule   (—)            reads CarController.AimDirection       [stub]
 
-CarStatus (Core) ← lock / reel timers; written by Ramming, read by Driving
+CarAbilities (Core) ← ability blocks; written by Ramming and Health (the wreck block); read by Driving, Ramming
+CarStats     (Core) ← base stats + modifiers; read by Combat, Ramming, Driving
+
+Health        (Combat) ← IDamageable; runs the damage path, raises Damaged / Destroyed
+WreckSequence (Combat) ← on Destroyed: layer change, roll, fade, deactivate
 
 CameraRig    (LateUpdate) ← car transform + CameraMode
 CrosshairHUD (LateUpdate) ← CarController.AimDirection, projected through the camera
@@ -22,14 +26,14 @@ CrosshairHUD (LateUpdate) ← CarController.AimDirection, projected through the 
 
 ## Modularity is compile-enforced, not aspirational
 
-**One assembly definition per script folder** — 13 of them. A reference from `Driving` to
+**One assembly definition per script folder** — 14 of them. A reference from `Driving` to
 `Weapons` is a compile error, not slow architectural drift. Every gameplay assembly
 references `MotorCombat.Core` and nothing else; only `MotorCombat.Cars` and
 `MotorCombat.Bootstrap` compose across modules.
 
 ```
 MotorCombat.Core      Aiming    Arena     Bootstrap  Cameras   Cars
-             Controls Driving   HUD       Ramming    Weapons
+             Combat    Controls Driving   HUD       Ramming    Weapons
              EditorTools        Tests.EditMode
 ```
 
@@ -45,11 +49,25 @@ resolve to the namespace).
 `CarFactory.Spawn` hard-codes the module set, so a car with a different *loadout* means
 editing that file. Tuning is data; composition is not, yet.
 
+## Core holds the contracts
+
+`MotorCombat.Core` doesn't just hold `CarController` — it holds every small contract that a
+future sub-project needs to plug into without touching the code that came before it:
+`CarAbilities`/`CarAbility` (ability switches), `CarStats`/`CarStat` (base stats and
+modifiers), `IDamageable`/`DamageRequest` (the one damage path), `Hostility` (who's an enemy of
+whom), `TickSchedule` (periodic damage), `CarRegistry` (every live car) and `PhysicsLayers`
+(layer names and their collision rules).
+
+This is the **closed-spec rule**: a later sub-project only *adds* — new files, new config
+types, new implementations of an existing interface, new registrations against an existing
+static. It never edits an earlier sub-project's code, so weapons, effects, projectiles and
+zones (sub-projects 2–6) are built entirely by calling into Core, not by changing it.
+
 ## Thin adapters over pure cores
 
 Each module is a MonoBehaviour that reads config, calls a static pure function, and writes
 the result to the Rigidbody. The maths lives in `DrivePhysics` and `AimMath` — no
-`GameObject`, no scene, testable directly. This is why 116 EditMode tests run in under a
+`GameObject`, no scene, testable directly. This is why 202 EditMode tests run in under a
 second with nothing instantiated.
 
 When adding a module, put the decision in a pure static and keep the MonoBehaviour dumb.

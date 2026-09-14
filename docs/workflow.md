@@ -47,27 +47,39 @@ is rejected with *"conflicts with a reserved Unity flag managed by this command.
 
 ## Tests
 
-116 EditMode tests, sub-second. Nearly all test pure statics; `CarFactoryTests` builds throwaway GameObjects but loads no scene.
+202 EditMode tests, sub-second. Nearly all test pure statics; `CarFactoryTests` builds throwaway GameObjects but loads no scene.
 
 | Fixture | Count |
 |---|---|
 | `DrivePhysicsTests` | 16 |
 | `ArenaMeshBuilderTests` | 15 |
 | `ArenaTextureBuilderTests` | 9 |
-| `CarFactoryTests` | 16 |
+| `CarFactoryTests` | 19 |
 | `AimMathTests` | 6 |
 | `CameraFovTests` | 5 |
-| `ArenaBuilderTests` | 6 |
-| `RamRulesTests` | 36 |
-| `CarStatusTests` | 7 |
+| `ArenaBuilderTests` | 7 |
+| `RamRulesTests` | 37 |
+| `CarAbilitiesTests` | 15 |
+| `CarStatsTests` | 9 |
+| `DamageRulesTests` | 9 |
+| `HealthStateTests` | 13 |
+| `TickScheduleTests` | 7 |
+| `HostilityTests` | 4 |
+| `HealthTests` | 5 |
+| `PhysicsLayersTests` | 3 |
+| `WreckMathTests` | 11 |
+| `WreckMaterialsTests` | 1 |
+| `HealthBarLayoutTests` | 7 |
+| `HudRootTests` | 1 |
+| `CarRegistryTests` | 3 |
 
 The test assembly carries the `UNITY_INCLUDE_TESTS` define constraint, so tests never ship
 in a player build.
 
 ## Acceptance checklist
 
-Behaviour that cannot be unit-tested. Rows 1–12 passed before ramming; rows 13–20 are new
-and not yet walked.
+Behaviour that cannot be unit-tested. Rows 1–20 passed before combat and the HUD; rows 21–26
+are new and not yet walked.
 
 | # | Check | Expected |
 |---|---|---|
@@ -91,6 +103,12 @@ and not yet walked.
 | 18 | Hit the dummy's front corner at a shallow vs steep angle | Nearly nose-to-nose (headings within 45° of opposite) is head-on; more than 45° off is flank |
 | 19 | Ram the dummy again while it is still sliding | Second ram applies; its reel restarts |
 | 20 | Any ram at top speed | No car leaves the ground or tips |
+| 21 | Play | Your HP bar bottom-centre reads 1000 / 1000; the dummy has a red bar and its name above it |
+| 22 | Drive around the dummy and away from it | Its bar faces you from every side and shrinks with distance, never below a readable size |
+| 23 | Dummy's Health component → right-click → Debug: take 25% max HP | Its bar shortens to three quarters |
+| 24 | Temporarily set RamConfig.flankDamage to 100, flank-ram the dummy, then head-on it; set it back to 0 | Flank shortens the bar; head-on does not |
+| 25 | Dummy's Health → Debug: destroy | Bar vanishes at once; dummy slides to a stop, rolls sideways, fades, disappears at ~1.5 s; you can drive through it but it never sinks or passes the wall |
+| 26 | Re-walk ram rows 13–20 | Unchanged — the ability re-expression preserves them |
 
 Row 9 is the one that matters. It is the reason the aiming and camera are built the way they
 are, and the hardest to judge by eye — pick a floor grid line and watch the crosshair

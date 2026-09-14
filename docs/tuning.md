@@ -61,6 +61,8 @@ Yaw is rigid to the chassis in both modes and must stay that way — see
 | `headOnScale` | 0.2 × | Head-on shove multiplier. Keep small: head-ons stop both cars and should not reward either |
 | `flankScale` | 1.5 × | Flank (side) shove multiplier |
 | `rearScale` | 1.2 × | Rear shove multiplier |
+| `flankDamage` | 0 | Flat damage a flank ram deals to the victim; see [combat.md](combat.md#the-damage-path) |
+| `rearDamage` | 0 | Flat damage a rear ram deals to the victim. Head-ons never deal damage |
 | `attackerLockSeconds` | 0.5 s | How long the attacker (and both cars in a head-on) ignore throttle and steer |
 | `reelSeconds` | 1 s | How long a flank or rear victim reels: no throttle, steer or grip; spins freely |
 | `minRamSpeed` | 3 m/s | Minimum attacker forward speed. Slower front contacts are plain physics bumps |
@@ -72,8 +74,20 @@ Yaw is rigid to the chassis in both modes and must stay that way — see
 Unity's `m_DefaultMaxAngularSpeed` (`ProjectSettings/DynamicsManager.asset`, 50 rad/s by
 default) silently caps `Rigidbody.angularVelocity`. With the values above, a flank ram near the
 victim's tail at a car's 25 m/s top speed spins it at about 10 rad/s (about 39 rad/s at
-`spinScale` 1), roughly two-thirds of a turn over the reel. Raising `attack`, `flankScale` or
+`spinScale` 1), roughly two-thirds of a turn over the reel. Raising `strength`, `flankScale` or
 `spinScale` about five-fold would start to clip the spin a ram deals.
+
+## WreckConfig
+
+| Field | Default | Notes |
+|---|---|---|
+| `rollDegrees` | 180° | Barrel roll about the car's length axis, visual only |
+| `rollSeconds` | 0.8 s | Duration of the roll, eased |
+| `fadeSeconds` | 1.5 s | Alpha goes from 1 to 0 over this time |
+| `removeAfterSeconds` | 1.5 s | The car is deactivated, not destroyed, so a future respawn can reuse it |
+
+See [combat.md](combat.md#destruction) for the full sequence, including the lift that keeps
+the rolled model's lowest corner on the floor and the fade-driven shadow cutoff.
 
 ## ArenaConfig
 
@@ -99,9 +113,12 @@ victim's tail at a car's 25 m/s top speed spins it at about 10 rad/s (about 39 r
 | `visualOffset` | (0, −0.667, −0.245) | Centres the model on the collider; the model's origin is at its wheels |
 | `visualYawOffset` | −90° | The model is authored nose-along-+X; Unity's forward is +Z |
 | `tintedMaterials` | Body, Door | Which materials take the team colour. Empty tints every renderer |
-| `attack` | 1 | Multiplies shove dealt |
-| `defense` | 1 | Divides shove received; must be > 0 |
-| `driveConfig` / `aimConfig` / `ramConfig` | references | |
+| `maxHealth` | 1000 | Hit points |
+| `attack` | 100 | Damage multiplier; 100 deals a weapon's listed damage |
+| `defense` | 0 | Damage reduction with diminishing returns; see [combat.md](combat.md#formula) |
+| `strength` | 1 | Multiplies shove dealt |
+| `resistance` | 1 | Divides shove received; must be > 0 |
+| `driveConfig` / `aimConfig` / `ramConfig` / `wreckConfig` | references | |
 
 Changing `length` no longer resizes the arena — that coupling was removed deliberately.
 

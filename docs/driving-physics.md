@@ -5,7 +5,8 @@ Arcade, not simulation. All the maths is in `DrivePhysics` as pure statics;
 
 ## Order of operations, every FixedUpdate
 
-1. **Thrust** — `AddForce(forward × throttle × enginePower)` when throttle > 0.
+1. **Thrust** — `AddForce(forward × throttle × enginePower × Stats.Effective(TopSpeed))` when
+   throttle > 0. See [combat.md](combat.md#stats) for `TopSpeed`.
 2. **Brake / reverse** — when throttle < 0: if forward speed exceeds `reverseEpsilon`,
    apply `brakeForce` opposing velocity; otherwise apply `reversePower` backward.
 3. **Drag** — velocity decays exponentially at `linearDrag` per second.
@@ -13,8 +14,13 @@ Arcade, not simulation. All the maths is in `DrivePhysics` as pure statics;
 5. **Grip** — decompose velocity into the car's forward and right axes and decay the right
    component. The gap between where the nose points and where velocity points is the drift.
 
-While the car is **locked or reeling**, throttle and steer read as zero. While **reeling**,
-yaw and grip are skipped — see [ramming.md](ramming.md#locked-and-reeling).
+Throttle, steer, yaw and grip are each gated by a `CarAbility` flag (`Throttle`, `Steer`,
+`YawHold`, `Grip`) rather than hard-coded to any one system: a blocked throttle or steer reads
+as zero, and a blocked yaw or grip step is skipped outright, whichever source did the
+blocking. Today that's only ram lock and reel — see
+[ramming.md](ramming.md#locked-and-reeling) — but a future effect uses the same
+`CarAbilities` seam without any change to this module. See
+[combat.md](combat.md#ability-switches).
 
 The order matters: drag before yaw means the yaw block reads the post-drag speed when
 deciding steering sense, and grip last means whatever sideways velocity survives is what

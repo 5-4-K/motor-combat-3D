@@ -4,8 +4,8 @@ Only **car-vs-car** contacts can be rams; walls and the ground stay plain physic
 ram resolves, the attacker stops dead and is briefly locked out of input; the victim is
 shoved away and reels, sliding and spinning until it recovers. A head-on is the exception —
 there is no single attacker or victim. Both cars' velocities are zeroed, and then **each**
-receives a small shove computed from the **other** car's attack, forward speed and heading
-(and its own defense), scaled by `headOnScale`. A parked car contributes zero forward speed,
+receives a small shove computed from the **other** car's strength, forward speed and heading
+(and its own resistance), scaled by `headOnScale`. A parked car contributes zero forward speed,
 so it gives no shove at all — the moving car simply stops, and only the parked car is pushed.
 See [The shove](#the-shove) for the exact head-on mapping.
 
@@ -54,17 +54,22 @@ Three decisions worth knowing came from the design conversation rather than fall
 the physics: a locked or reeling car cannot attack, the faster car wins a double-qualify,
 and an exact speed tie counts as a head-on rather than being decided arbitrarily.
 
+**A wreck can be neither an attacker nor a victim.** `Wreck` collides only with `Arena` (see
+[combat.md](combat.md#physics-layers)), so a live car and a wreck never generate
+`OnCollisionEnter` for each other at all. `RammingModule.OnCollisionEnter` also checks
+`Targetable` on both cars before resolving a pair, belt-and-braces with the layer split.
+
 ## The shove
 
-Mass is deliberately ignored — `attack` and `defense` are the only balance levers. The
+Mass is deliberately ignored — `strength` and `resistance` are the only balance levers. The
 velocity change dealt to a victim is
 
 ```
-shoveDv = flatForward_attacker × (attack_attacker / defense_victim) × forwardSpeed_attacker × typeScale
+shoveDv = flatForward_attacker × (strength_attacker / resistance_victim) × forwardSpeed_attacker × typeScale
 ```
 
 where `typeScale` is `headOnScale`, `flankScale` or `rearScale`, and `forwardSpeed` is
-`max(0, dot(preContactVelocity, flatForward))`. `defense` is clamped to a minimum of 0.01 so
+`max(0, dot(preContactVelocity, flatForward))`. `resistance` is clamped to a minimum of 0.01 so
 a misconfigured zero cannot divide by zero. `shoveDv.y` is always 0 — a ram never adds
 vertical velocity.
 
@@ -72,14 +77,14 @@ vertical velocity.
 applied twice with the roles swapped and `typeScale = headOnScale`:
 
 ```
-shoveDv_toCarA = flatForward_carB × (attack_carB / defense_carA) × forwardSpeed_carB × headOnScale
-shoveDv_toCarB = flatForward_carA × (attack_carA / defense_carB) × forwardSpeed_carA × headOnScale
+shoveDv_toCarA = flatForward_carB × (strength_carB / resistance_carA) × forwardSpeed_carB × headOnScale
+shoveDv_toCarB = flatForward_carA × (strength_carA / resistance_carB) × forwardSpeed_carA × headOnScale
 ```
 
-Each car's shove comes from the **other** car's attack, forward speed and heading, divided
-by its own defense. A parked car has `forwardSpeed = 0`, so `shoveDv_toCarA` above is the
+Each car's shove comes from the **other** car's strength, forward speed and heading, divided
+by its own resistance. A parked car has `forwardSpeed = 0`, so `shoveDv_toCarA` above is the
 zero vector when car B is parked — the moving car (A) simply stops and receives nothing,
-while the parked car (B) is pushed by A's attack and speed. In an angled head-on the shove's
+while the parked car (B) is pushed by A's strength and speed. In an angled head-on the shove's
 sideways component (relative to the now-locked, zero-velocity car it lands on) is mostly
 removed by grip on the very next `DrivingModule.Tick`, since grip keeps running while
 Locked — only the reeling state turns it off. `RamReport.attacker` for a head-on is simply
@@ -100,7 +105,24 @@ give a solid box of that footprint — pushing a victim's tail toward its right 
 yaw (the nose swings left). Head-on rams never spin: the shove is applied through the
 centre.
 
+## Damage
+
+Alongside the shove, a flank or rear ram also sends the victim a flat `DamageRequest`
+(`source` = the attacker, `sourceTag = "ram"`) for `RamConfig.flankDamage` or `rearDamage`
+(both placeholder **0**) — mitigated by the normal combat formula, same as any other damage
+source (see [combat.md](combat.md#formula)). **Head-ons never deal damage**: there is no
+single attacker to credit, and the shove itself is already deliberately weak
+(`headOnScale`) so a head-on shouldn't reward either side.
+
 ## Locked and reeling
+
+Lock and reel are both plain `CarAbilities` blocks — see
+[combat.md](combat.md#ability-switches) for the general mechanism. Ram lock blocks
+`Throttle | Steer | Ram` for `attackerLockSeconds` with `BlockRefresh.KeepLonger`; ram reel
+blocks `Throttle | Steer | YawHold | Grip | Ram` for `reelSeconds` with
+`BlockRefresh.Restart`. Each is registered under its own module-static source key
+(`LockBlock`, `ReelBlock`), so ramming's blocks never interact with any other system's, and
+the observable effect is the table below:
 
 | | Normal | Locked | Reeling |
 |---|---|---|---|
@@ -112,10 +134,14 @@ centre.
 | Can attack | yes | no | no |
 
 An attacker (and both cars in a head-on) is Locked for `attackerLockSeconds`; a flank or
-rear victim Reels for `reelSeconds`. Locking never shortens a longer lock already running;
-reeling restarts on a fresh hit, so chaining rams on a helpless car keeps it helpless.
-Reeling takes precedence when both timers are running on the same car. When the reel ends,
-grip and steering resume through their normal code paths, but the two do not behave the
+rear victim Reels for `reelSeconds`. `KeepLonger` means locking never shortens a longer lock
+already running; `Restart` means reeling restarts on a fresh hit, so chaining rams on a
+helpless car keeps it helpless. Because the reel mask is a superset of the lock mask, a car
+that picks up both blocks at once (locked as an attacker, then hit as a reel victim before
+the lock expires) still loses `YawHold` and `Grip` too — `CarAbilities.Has` blocks an ability
+if *any* active block covers it, so the two blocks simply combine rather than one state
+overriding the other. When the reel ends, grip and steering resume through their normal code
+paths, but the two do not behave the
 same way. Grip is itself a 1/s decay (see [every decay value is a
 rate](driving-physics.md#every-decay-value-is-a-rate-in-1s)), so the sideways slide eases
 back in rather than vanishing in one step. Yaw does not: `DrivingModule` writes
@@ -182,11 +208,11 @@ looked like.
 
 ## Tests
 
-`RamRulesTests` — 36 tests covering every region including corner-band edges, attack
+`RamRulesTests` — 37 tests covering every region including corner-band edges, attack
 regions, each type including the 45° boundary on both sides, every `Resolve` case from
-§1.4, shove magnitude and the defense clamp, and spin (zero through the centre, sign,
-linearity in `spinScale`, timestep-independent decay).
+§1.4, shove magnitude and the resistance clamp, damage (`DamageFor`), and spin (zero through
+the centre, sign, linearity in `spinScale`, timestep-independent decay).
 
-`CarStatusTests` — 7 tests covering lock/reel counting down and clearing, reel restarting,
-a lock never shortening a longer one, `CanDrive`/`CanAttack` going false in either state, and
-`Advance` clamping at 0.
+Lock and reel's timing — refresh modes, independence between sources, untimed blocks — is
+covered by `CarAbilitiesTests`, since both are just ordinary blocks now. See
+[combat.md](combat.md#tests).
