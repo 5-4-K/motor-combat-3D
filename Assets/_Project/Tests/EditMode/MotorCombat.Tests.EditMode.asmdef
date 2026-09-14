@@ -13,6 +13,7 @@
         "MotorCombat.Ramming",
         "MotorCombat.Combat",
         "MotorCombat.Effects",
+        "MotorCombat.Weapons",
         "MotorCombat.HUD",
         "MotorCombat.Bootstrap",
         "UnityEngine.UI"
