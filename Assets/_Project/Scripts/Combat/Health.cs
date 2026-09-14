@@ -1,0 +1,93 @@
+using System;
+using UnityEngine;
+using MotorCombat.Core;
+
+namespace MotorCombat.Combat
+{
+    /// <summary>
+    /// A car's health. Thin adapter: gathers targetable, hostility, attack and
+    /// defense from the car, runs <see cref="HealthState"/>, raises events, and on
+    /// the killing hit turns the car into a wreck.
+    /// </summary>
+    [RequireComponent(typeof(CarController))]
+    public class Health : MonoBehaviour, IDamageable
+    {
+        /// <summary>Source key for the wreck's untimed ability block.</summary>
+        public static readonly object WreckBlock = new object();
+
+        const CarAbility WreckMask = CarAbility.Throttle | CarAbility.Steer | CarAbility.Fire
+                                     | CarAbility.Ram | CarAbility.Targetable;
+
+        [Tooltip("Set from CarDefinition by CarFactory.")]
+        public float maxHealth = 1000f;
+
+        public event Action<DamageReport> Damaged;
+        public event Action<DamageReport> Destroyed;
+
+        HealthState _state;
+        CarController _car;
+
+        // Created on first use, after CarFactory has set maxHealth.
+        HealthState State => _state ?? (_state = new HealthState(maxHealth));
+        CarController Car => _car != null ? _car : (_car = GetComponent<CarController>());
+
+        public float Current => State.Current;
+        public float Max => State.Max;
+        public bool IsDestroyed => State.IsDestroyed;
+
+        public void AddGate(object source, Func<DamageRequest, bool> blocks) => State.AddGate(source, blocks);
+        public void RemoveGate(object source) => State.RemoveGate(source);
+
+        public DamageResult Apply(in DamageRequest request)
+        {
+            CarController car = Car;
+
+            DamageResult result = State.Apply(
+                request,
+                car.Abilities.Has(CarAbility.Targetable),
+                Hostility.AreEnemies(request.source, car),
+                request.source != null ? request.source.Stats.Effective(CarStat.Attack) : DamageRules.NeutralAttack,
+                car.Stats.Effective(CarStat.Defense));
+
+            if (result.outcome != DamageOutcome.Applied) return result;
+
+            var report = new DamageReport
+            {
+                source = request.source,
+                target = car,
+                sourceTag = request.sourceTag,
+                kind = request.kind,
+                dealt = result.dealt,
+                healthAfter = State.Current
+            };
+
+            Damaged?.Invoke(report);
+
+            if (result.killed)
+            {
+                // A wreck carries nothing over: ram lock, reel and every effect end.
+                car.Abilities.UnblockAll();
+                car.Stats.RemoveAll();
+                car.Abilities.Block(WreckBlock, WreckMask, float.PositiveInfinity, BlockRefresh.KeepLonger);
+
+                Destroyed?.Invoke(report);
+            }
+
+            return result;
+        }
+
+#if UNITY_EDITOR
+        [ContextMenu("Debug: take 25% max HP")]
+        void DebugTakeQuarter()
+        {
+            Apply(new DamageRequest { sourceTag = "debug", kind = DamageKind.MaxHealthPercent, amount = 25f });
+        }
+
+        [ContextMenu("Debug: destroy")]
+        void DebugDestroy()
+        {
+            Apply(new DamageRequest { sourceTag = "debug", kind = DamageKind.Flat, amount = 1e9f });
+        }
+#endif
+    }
+}

@@ -19,6 +19,15 @@ namespace MotorCombat.Ramming
         [Tooltip("Rear shove multiplier.")]
         public float rearScale = 1.2f;
 
+        [Header("Damage (flat, scaled by attack and defense)")]
+        [Tooltip("Flat damage a flank ram deals to the victim. Head-ons never deal damage.")]
+        [Min(0f)]
+        public float flankDamage = 0f;
+
+        [Tooltip("Flat damage a rear ram deals to the victim.")]
+        [Min(0f)]
+        public float rearDamage = 0f;
+
         [Header("States (seconds)")]
         [Tooltip("How long the attacker (and both cars in a head-on) ignore throttle and steer.")]
         public float attackerLockSeconds = 0.5f;

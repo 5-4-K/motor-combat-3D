@@ -6,7 +6,8 @@
         "MotorCombat.Driving",
         "MotorCombat.Aiming",
         "MotorCombat.Ramming",
-        "MotorCombat.Weapons"
+        "MotorCombat.Weapons",
+        "MotorCombat.Combat"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

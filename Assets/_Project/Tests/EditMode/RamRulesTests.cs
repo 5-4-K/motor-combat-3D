@@ -188,6 +188,15 @@ namespace MotorCombat.Tests
         }
 
         [Test]
+        public void DamageFor_OnlyFlankAndRearDealDamage()
+        {
+            Assert.AreEqual(30f, RamRules.DamageFor(RamType.Flank, 30f, 20f));
+            Assert.AreEqual(20f, RamRules.DamageFor(RamType.Rear, 30f, 20f));
+            Assert.AreEqual(0f, RamRules.DamageFor(RamType.HeadOn, 30f, 20f), "head-ons never deal damage");
+            Assert.AreEqual(0f, RamRules.DamageFor(RamType.None, 30f, 20f));
+        }
+
+        [Test]
         public void ShoveDelta_IsStrengthOverResistanceTimesSpeedTimesScale_AlongHeading()
         {
             Vector3 shove = RamRules.ShoveDelta(Vector3.forward, strength: 2f, resistance: 1f, speed: 10f, scale: 1.5f);

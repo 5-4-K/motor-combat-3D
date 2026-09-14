@@ -5,6 +5,7 @@ using MotorCombat.Cars;
 using MotorCombat.Driving;
 using MotorCombat.Aiming;
 using MotorCombat.Ramming;
+using MotorCombat.Combat;
 
 namespace MotorCombat.Tests
 {
@@ -35,6 +36,8 @@ namespace MotorCombat.Tests
             _definition.defense = 40f;
             _definition.strength = 2f;
             _definition.resistance = 3f;
+
+            _definition.maxHealth = 750f;
 
             _car = CarFactory.Spawn(
                 _definition, Vector3.zero, Quaternion.identity, null, Color.white);
@@ -148,6 +151,15 @@ namespace MotorCombat.Tests
             Assert.AreEqual(2f, _car.Stats.Base(CarStat.Strength));
             Assert.AreEqual(3f, _car.Stats.Base(CarStat.Resistance));
             Assert.AreEqual(1f, _car.Stats.Base(CarStat.TopSpeed));
+        }
+
+        [Test]
+        public void Spawn_AddsHealthWithMaxFromTheDefinition()
+        {
+            var health = _car.GetComponent<Health>();
+            Assert.IsNotNull(health);
+            Assert.AreEqual(750f, health.Max);
+            Assert.IsNotNull(_car.GetComponent<IDamageable>());
         }
 
         // --- Visual: placeholder box ------------------------------------------

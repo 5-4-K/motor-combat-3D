@@ -154,6 +154,17 @@ namespace MotorCombat.Ramming
             }
         }
 
+        /// <summary>Flat damage a ram deals. Only flank and rear rams damage; head-ons never do.</summary>
+        public static float DamageFor(RamType type, float flankDamage, float rearDamage)
+        {
+            switch (type)
+            {
+                case RamType.Flank: return flankDamage;
+                case RamType.Rear: return rearDamage;
+                default: return 0f;
+            }
+        }
+
         /// <summary>
         /// Velocity change for the victim. Mass is deliberately ignored: strength and
         /// resistance are the only balance levers. With equal stats and scale 1 the

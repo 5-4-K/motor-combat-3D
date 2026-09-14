@@ -170,6 +170,18 @@ namespace MotorCombat.Ramming
             victim.SetHorizontalVelocity(preVelocity + shove, victim.Car.PreStepAngularVelocity.y + spin);
             victim.Car.Abilities.Block(ReelBlock, ReelMask, config.reelSeconds, BlockRefresh.Restart);
 
+            float damage = RamRules.DamageFor(type, config.flankDamage, config.rearDamage);
+            if (damage > 0f)
+            {
+                victim.GetComponent<IDamageable>()?.Apply(new DamageRequest
+                {
+                    source = attacker.Car,
+                    sourceTag = "ram",
+                    kind = DamageKind.Flat,
+                    amount = damage
+                });
+            }
+
             Report(type, attacker, victim, attackerSide, victimSide, shove.magnitude, spin);
         }
 

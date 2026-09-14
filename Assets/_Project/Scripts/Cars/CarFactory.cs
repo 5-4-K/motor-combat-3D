@@ -1,5 +1,6 @@
 using UnityEngine;
 using MotorCombat.Core;
+using MotorCombat.Combat;
 using MotorCombat.Driving;
 using MotorCombat.Aiming;
 using MotorCombat.Ramming;
@@ -70,6 +71,8 @@ namespace MotorCombat.Cars
 
             car.AddComponent<RammingModule>().config = definition.ramConfig;
             car.AddComponent<WeaponModule>();
+
+            car.AddComponent<Health>().maxHealth = definition.maxHealth;
 
             controller.Bind(provider);
             return controller;
