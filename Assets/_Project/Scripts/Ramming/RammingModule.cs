@@ -42,6 +42,14 @@ namespace MotorCombat.Ramming
         RammingModule _resolvedPartner;
         float _resolvedAt = -1f;
 
+        // Block sources for the ability switches. One key per kind of block is
+        // enough: every car owns its own CarAbilities.
+        static readonly object LockBlock = new object();
+        static readonly object ReelBlock = new object();
+
+        const CarAbility LockMask = CarAbility.Throttle | CarAbility.Steer | CarAbility.Ram;
+        const CarAbility ReelMask = CarAbility.Throttle | CarAbility.Steer | CarAbility.YawHold | CarAbility.Grip | CarAbility.Ram;
+
         // Looked up lazily: collision callbacks are not guaranteed to wait for Start.
         CarController Car => _car != null ? _car : (_car = GetComponent<CarController>());
         BoxCollider Box => _box != null ? _box : (_box = GetComponent<BoxCollider>());
@@ -57,9 +65,9 @@ namespace MotorCombat.Ramming
 
         public void Tick(in CarInput input, float dt)
         {
-            if (config == null || !Car.Status.IsReeling) return;
+            if (config == null || Car.Abilities.Has(CarAbility.YawHold)) return;
 
-            // DrivingModule does not write yaw while reeling; the spin winds down here.
+            // DrivingModule does not write yaw while YawHold is blocked; the spin winds down here.
             Rigidbody body = Car.Body;
             body.angularVelocity = Vector3.up * RamRules.DecaySpin(body.angularVelocity.y, config.spinDecayRate, dt);
         }
@@ -85,6 +93,7 @@ namespace MotorCombat.Ramming
 
             var partner = other.GetComponent<RammingModule>();
             if (partner == null || config == null || partner.config == null) return;
+            if (!Car.Abilities.Has(CarAbility.Targetable) || !partner.Car.Abilities.Has(CarAbility.Targetable)) return;
 
             float now = Time.fixedTime;
             if (_resolvedPartner == partner && _resolvedAt == now) return;
@@ -145,7 +154,7 @@ namespace MotorCombat.Ramming
                 region = RamRules.Region(local, Box.size.x, Box.size.z, cornerBand),
                 flatForward = forward,
                 forwardSpeed = RamRules.ForwardSpeed(Car.PreStepVelocity, forward),
-                canAttack = Car.Status.CanAttack
+                canAttack = Car.Abilities.Has(CarAbility.Ram)
             };
         }
 
@@ -156,11 +165,11 @@ namespace MotorCombat.Ramming
             float spin = RamRules.SpinDelta(contact, victim.transform.position, shove, victim.Box.size.x, victim.Box.size.z, config.spinScale);
 
             attacker.SetHorizontalVelocity(Vector3.zero, 0f);
-            attacker.Car.Status.Lock(config.attackerLockSeconds);
+            attacker.Car.Abilities.Block(LockBlock, LockMask, config.attackerLockSeconds, BlockRefresh.KeepLonger);
 
             Vector3 preVelocity = victim.Car.PreStepVelocity;
             victim.SetHorizontalVelocity(preVelocity + shove, victim.Car.PreStepAngularVelocity.y + spin);
-            victim.Car.Status.Reel(config.reelSeconds);
+            victim.Car.Abilities.Block(ReelBlock, ReelMask, config.reelSeconds, BlockRefresh.Restart);
 
             Report(type, attacker, victim, attackerSide, victimSide, shove.magnitude, spin);
         }
@@ -175,8 +184,8 @@ namespace MotorCombat.Ramming
             SetHorizontalVelocity(toSelf, 0f);
             partner.SetHorizontalVelocity(toPartner, 0f);
 
-            Car.Status.Lock(config.attackerLockSeconds);
-            partner.Car.Status.Lock(config.attackerLockSeconds);
+            Car.Abilities.Block(LockBlock, LockMask, config.attackerLockSeconds, BlockRefresh.KeepLonger);
+            partner.Car.Abilities.Block(LockBlock, LockMask, config.attackerLockSeconds, BlockRefresh.KeepLonger);
 
             Report(RamType.HeadOn, this, partner, self, them, toPartner.magnitude, 0f);
         }

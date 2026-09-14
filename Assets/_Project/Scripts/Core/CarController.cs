@@ -23,8 +23,8 @@ namespace MotorCombat.Core
         /// <summary>World-space direction the weapons point.</summary>
         public Vector3 AimDirection => Quaternion.AngleAxis(AimYaw, Vector3.up) * transform.forward;
 
-        /// <summary>Lock and reel timers. Written by ramming, obeyed by driving.</summary>
-        public CarStatus Status { get; } = new CarStatus();
+        /// <summary>Ability switches. Blocked by rams, wrecks and (later) effects; obeyed by driving, ramming and weapons.</summary>
+        public CarAbilities Abilities { get; } = new CarAbilities();
 
         /// <summary>
         /// Velocity going INTO the last physics step, recorded after every module
@@ -91,7 +91,7 @@ namespace MotorCombat.Core
             // are meaningful here.
             float dt = Time.fixedDeltaTime;
 
-            Status.Advance(dt);
+            Abilities.Advance(dt);
 
             for (int i = 0; i < _modules.Count; i++)
             {

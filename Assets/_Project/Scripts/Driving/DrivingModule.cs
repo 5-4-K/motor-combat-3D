@@ -37,12 +37,12 @@ namespace MotorCombat.Driving
 
             Rigidbody body = _car.Body;
             Vector3 forward = FlatForward();
-            CarStatus status = _car.Status;
+            CarAbilities abilities = _car.Abilities;
 
-            // Locked or reeling: throttle and steer are ignored. Aim is untouched —
-            // it runs in AimModule on the frame tick.
-            float throttle = status.CanDrive ? input.throttle : 0f;
-            float steer = status.CanDrive ? input.steer : 0f;
+            // A blocked ability ignores its input — a ram lock, a reel, a wreck or
+            // (later) an effect. Aim is untouched: it runs in AimModule.
+            float throttle = abilities.Has(CarAbility.Throttle) ? input.throttle : 0f;
+            float steer = abilities.Has(CarAbility.Steer) ? input.steer : 0f;
 
             // 1. Thrust, brake and reverse.
             Vector3 force = DrivePhysics.DriveForce(
@@ -62,25 +62,29 @@ namespace MotorCombat.Driving
             // 2. Drag, applied manually so terminal speed matches the formula.
             body.linearVelocity = DrivePhysics.ApplyDrag(body.linearVelocity, config.linearDrag, dt);
 
-            // A reeling car slides and spins freely: no yaw write (the ram's spin
-            // survives and decays in RammingModule) and no grip (the shove survives).
-            if (status.IsReeling) return;
-
             // 3. Yaw, set directly. Never gated on speed MAGNITUDE, so turning on
             //    the spot works; the SIGN of travel can invert the steering sense
-            //    so reversing handles like a real car.
-            float forwardSpeed = Vector3.Dot(body.linearVelocity, forward);
-            float yawRate = DrivePhysics.YawRate(
-                steer,
-                config.turnRate,
-                forwardSpeed,
-                config.flipSteeringInReverse,
-                config.reverseEpsilon);
-            body.angularVelocity = Vector3.up * (yawRate * Mathf.Deg2Rad);
+            //    so reversing handles like a real car. Skipped while YawHold is
+            //    blocked: a reeling car spins freely and RammingModule decays it.
+            if (abilities.Has(CarAbility.YawHold))
+            {
+                float forwardSpeed = Vector3.Dot(body.linearVelocity, forward);
+                float yawRate = DrivePhysics.YawRate(
+                    steer,
+                    config.turnRate,
+                    forwardSpeed,
+                    config.flipSteeringInReverse,
+                    config.reverseEpsilon);
+                body.angularVelocity = Vector3.up * (yawRate * Mathf.Deg2Rad);
+            }
 
-            // 4. Grip. Whatever sideways velocity survives is the drift.
-            body.linearVelocity = DrivePhysics.ApplyGrip(
-                body.linearVelocity, forward, config.lateralGripStrength, dt);
+            // 4. Grip. Whatever sideways velocity survives is the drift. Skipped
+            //    while Grip is blocked, so a ram's shove survives.
+            if (abilities.Has(CarAbility.Grip))
+            {
+                body.linearVelocity = DrivePhysics.ApplyGrip(
+                    body.linearVelocity, forward, config.lateralGripStrength, dt);
+            }
         }
 
         public void FrameTick(in CarInput input, float dt)
