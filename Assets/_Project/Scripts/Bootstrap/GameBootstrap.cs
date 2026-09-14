@@ -81,6 +81,10 @@ namespace MotorCombat.Bootstrap
             enemyBars.viewer = player;
             enemyBars.view = cameraRig.GetComponent<Camera>();
             enemyBars.Build(hud.Rect);
+
+            var selfEffects = hud.gameObject.AddComponent<SelfEffectsWidget>();
+            selfEffects.viewer = player;
+            selfEffects.Build(hud.Rect);
         }
 
         bool Validate()

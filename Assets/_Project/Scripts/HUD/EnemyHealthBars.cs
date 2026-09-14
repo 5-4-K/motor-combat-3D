@@ -8,7 +8,7 @@ namespace MotorCombat.HUD
     /// <summary>
     /// A bar and name over every enemy car, always on. Drawn in screen space from
     /// a point above the roof, so it faces the viewer from any angle. Width follows
-    /// the car's on-screen width, clamped. Nearer bars draw on top.
+    /// the car's on-screen width, clamped. Active effects show as chips under the bar. Nearer bars draw on top.
     ///
     /// Runs after the camera has moved this frame, or bars lag one frame behind.
     /// </summary>
@@ -24,6 +24,10 @@ namespace MotorCombat.HUD
         [Tooltip("Reference pixels.")] public float barHeight = 8f;
         public int fontSize = 14;
         [Tooltip("Reference pixels beyond the edge before a bar is hidden.")] public float screenMargin = 100f;
+        [Tooltip("Reference pixels.")] public float effectChipWidth = 48f;
+        [Tooltip("Reference pixels.")] public float effectChipHeight = 14f;
+        [Tooltip("Reference pixels.")] public float effectChipGap = 3f;
+        public int effectFontSize = 10;
 
         static readonly Color Track = new Color(0.12f, 0.02f, 0.02f, 0.85f);
         static readonly Color FillColour = new Color(0.88f, 0.25f, 0.23f);
@@ -33,6 +37,8 @@ namespace MotorCombat.HUD
             public RectTransform root;
             public RectTransform fill;
             public Text name;
+            public EffectChipRow effects;
+            public IEffectReceiver receiver;
             public float depth;
         }
 
@@ -91,6 +97,7 @@ namespace MotorCombat.HUD
                     bar.root.sizeDelta = new Vector2(HealthBarLayout.BarWidth(projected, scale, minWidth, maxWidth), barHeight);
                     HudElements.SetFill(bar.fill, HealthBarLayout.Fill(health.Current, health.Max));
                     if (bar.name.text != car.name) bar.name.text = car.name;
+                    bar.effects.Show(bar.receiver);
 
                     bar.depth = screen.z;
                     _visible.Add(bar);
@@ -126,7 +133,20 @@ namespace MotorCombat.HUD
             labelRect.anchoredPosition = new Vector2(0f, 2f);
             labelRect.sizeDelta = new Vector2(0f, fontSize + 4f);
 
-            var bar = new Bar { root = root, fill = fill, name = label };
+            var effects = new EffectChipRow(root, "Effects", effectChipWidth, effectChipHeight, effectChipGap, effectFontSize);
+            RectTransform effectsRect = effects.Root;
+            effectsRect.anchorMin = effectsRect.anchorMax = new Vector2(0.5f, 0f);
+            effectsRect.pivot = new Vector2(0.5f, 1f);
+            effectsRect.anchoredPosition = new Vector2(0f, -3f);
+
+            var bar = new Bar
+            {
+                root = root,
+                fill = fill,
+                name = label,
+                effects = effects,
+                receiver = car.GetComponent<IEffectReceiver>()
+            };
             _bars[car] = bar;
             return bar;
         }
